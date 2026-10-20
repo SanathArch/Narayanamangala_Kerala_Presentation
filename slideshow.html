@@ -88,6 +88,91 @@ body:hover #nav{opacity:1}
 #grid figcaption{font-size:13px;color:#d9d2c6;margin-top:7px}
 #grid figcaption b{color:var(--red);margin-right:8px}
 .hint{position:fixed;left:50%;top:66px;transform:translateX(-50%);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(243,239,232,.55);z-index:6;transition:opacity 1s}
+#grid .gclose{position:sticky;top:0;float:right;z-index:2;background:rgba(20,18,16,.85);color:var(--ink);border:1px solid rgba(255,255,255,.16);border-radius:3px;padding:8px 13px;font:600 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+#grid .gclose:hover{background:rgba(200,50,31,.85)}
+.mk-m{display:none}
+
+/* ---------- fluid layout: phones, small tablets, short windows ----------
+   The 1920x1080 stage is kept for laptops / projectors. When it would scale
+   below ~55% (text too small to read) the script adds .fluid and the slides
+   reflow to the screen instead of being shrunk. */
+@media (hover:none){ #nav{opacity:1} }
+#stage.fluid{left:0;top:0;width:100%;height:100%}
+#stage.fluid .slide{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+#stage.fluid .mk-d{display:none}
+#stage.fluid .mk-m{display:inline}
+
+/* view slides */
+#stage.fluid .view{display:flex;flex-direction:column}
+#stage.fluid .view .shade{display:none}
+#stage.fluid .hdr{position:relative;left:auto;right:auto;top:auto;order:0;gap:14px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;font-size:10px;letter-spacing:.18em}
+#stage.fluid .hdr span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#stage.fluid .hdr span:last-child{flex:none}
+#stage.fluid .view .bg{position:relative;inset:auto;height:auto;aspect-ratio:16/10;flex:none;order:1}
+#stage.fluid .cap{position:relative;left:auto;bottom:auto;width:auto;order:2;padding:18px 16px 0}
+#stage.fluid .cap .no{font-size:11px;letter-spacing:.18em;gap:10px}
+#stage.fluid .cap .no i{width:28px}
+#stage.fluid .cap h2{font-size:clamp(30px,8vw,52px);margin:8px 0}
+#stage.fluid .cap p{font-size:15px}
+#stage.fluid .kp{position:relative;right:auto;bottom:auto;width:auto;max-width:600px;order:3;margin:18px 16px 0;padding:12px 12px 10px;box-shadow:none}
+#stage.fluid .kp .t{font-size:11px;margin-bottom:8px}
+#stage.fluid .kp .f{font-size:10px;gap:10px}
+#stage.fluid .kp .f>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* cover */
+#stage.fluid .cover .shade{background:linear-gradient(180deg,rgba(12,11,10,.3) 0%,rgba(12,11,10,.55) 40%,rgba(12,11,10,.93) 100%)}
+#stage.fluid .cover .in{left:0;right:0;width:auto;justify-content:flex-end;padding:24px 20px calc(96px + env(safe-area-inset-bottom,0px))}
+#stage.fluid .cover .kick{font-size:11px;letter-spacing:.24em;gap:12px}
+#stage.fluid .cover .kick i{width:32px}
+#stage.fluid .cover h1{font-size:clamp(44px,12vw,96px);margin:18px 0 12px}
+#stage.fluid .cover .sub{font-size:clamp(20px,5.4vw,32px)}
+#stage.fluid .cover .meta{margin-top:28px;gap:clamp(18px,6vw,40px);font-size:10px;letter-spacing:.14em}
+#stage.fluid .cover .meta b{font-size:clamp(30px,8vw,44px)}
+
+/* floor index */
+#stage.fluid .idx{padding-top:calc(22px + env(safe-area-inset-top,0px));padding-left:16px;padding-right:16px}
+#stage.fluid .idx .side{position:relative;left:auto;top:auto;bottom:auto;width:auto}
+#stage.fluid .idx .side .kick{font-size:11px}
+#stage.fluid .idx .side h2{font-size:clamp(40px,10vw,64px);margin:10px 0 6px}
+#stage.fluid .idx .side .d{font-size:15px;margin-bottom:16px}
+#stage.fluid .idx ol{overflow:visible;flex:none}
+#stage.fluid .idx li{font-size:15px;padding:11px 0}
+#stage.fluid .idx .plan{position:relative;right:auto;top:auto;width:auto;margin-top:22px;padding:10px}
+#stage.fluid .idx .note{font-size:11px;flex-wrap:wrap;gap:6px 16px;margin-top:10px}
+
+/* chrome in fluid mode */
+body.fluid #nav{opacity:1;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));gap:6px}
+body.fluid #nav button{white-space:nowrap;padding:10px 14px;background:rgba(20,18,16,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+body.fluid .hint{top:auto;bottom:calc(70px + env(safe-area-inset-bottom,0px));width:max-content;max-width:90vw;text-align:center;font-size:10px}
+body.fluid #grid{padding:16px}
+body.fluid #grid .g{grid-template-columns:repeat(auto-fill,minmax(min(260px,40vw),1fr));gap:12px;margin-bottom:26px}
+body.fluid #grid figcaption{font-size:12px}
+@media (max-width:480px){ body.fluid #bFull{display:none} }
+
+/* phones held sideways: picture beside the text */
+@media (orientation:landscape){
+  #stage.fluid .view{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:20px;padding-left:16px;padding-right:16px}
+  #stage.fluid .hdr{grid-column:1/-1;padding-left:0;padding-right:0}
+  #stage.fluid .view .bg{grid-column:1;grid-row:2/4;border-radius:3px}
+  #stage.fluid .cap{grid-column:2;padding:0}
+  #stage.fluid .cap h2{font-size:clamp(26px,4.4vw,44px)}
+  #stage.fluid .cap p{font-size:14px}
+  #stage.fluid .kp{grid-column:2;margin:14px 0 0;max-width:none}
+  #stage.fluid .cover .shade{background:linear-gradient(90deg,rgba(12,11,10,.92) 0%,rgba(12,11,10,.7) 45%,rgba(12,11,10,.2) 85%)}
+  #stage.fluid .cover .in{justify-content:center;padding-bottom:56px;max-width:720px}
+  #stage.fluid .idx{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,1.3fr);gap:24px;align-items:start}
+  #stage.fluid .idx .plan{margin-top:0}
+  #stage.fluid .idx .side h2{font-size:clamp(32px,5vw,56px)}
+}
+@media (orientation:landscape) and (max-height:480px){
+  #stage.fluid .cover h1{font-size:clamp(36px,7vw,64px);margin:10px 0 8px}
+  #stage.fluid .cover .meta{margin-top:16px}
+  #stage.fluid .cover .meta b{font-size:30px}
+}
+
+/* ---------- image protection: no drag, no long-press save, no selection ---------- */
+img,svg,image{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 </style>
 </head>
 <body>
@@ -163,7 +248,7 @@ for (const fl of ["GF","FF"]){
       <div class="d">${areas.join(" · ")}</div>
       <ol>${vs.map(v=>`<li data-go="${v.n}"><em>${pad(v.n)}</em>${v.area}<small>${v.file.match(/(\d+)$/)[1] ? "View "+v.file.match(/(\d+)$/)[1] : ""}</small></li>`).join("")}</ol>
     </div>
-    <div class="plan">${planSVG(fl, shown.map(v=>marker(v)).join(""))}
+    <div class="plan">${planSVG(fl, `<g class="mk-d">${shown.map(v=>marker(v)).join("")}</g><g class="mk-m">${shown.map(v=>marker(v,{r:28,L:120,fs:26,sw:3})).join("")}</g>`)}
     <div class="note"><span>Red dot = camera position · wedge = view direction &amp; field of view</span><span>${fl=="GF"?"Click a marker or a view to open it":"Click a marker or a view to open it"}</span></div></div>`, "idx");
   for (const v of vs){
     slideOfView[v.n] = slides.length;
@@ -192,12 +277,17 @@ let cur = 0;
 function load(i){ const s=slides[i]; if(!s) return; s.el.querySelectorAll("img[data-src]").forEach(im=>{ im.src=im.dataset.src; im.removeAttribute("data-src"); }); }
 function go(i){
   i = Math.max(0, Math.min(slides.length-1, i));
-  slides[cur].el.classList.remove("on"); cur=i; slides[cur].el.classList.add("on");
+  slides[cur].el.classList.remove("on"); cur=i; slides[cur].el.classList.add("on"); slides[cur].el.scrollTop=0;
   [i,i+1,i+2,i-1].forEach(load);
   document.getElementById("bar").style.width = (100*(cur)/(slides.length-1))+"%";
   try{ history.replaceState(null,"","#"+cur); }catch(e){}
 }
-function fit(){ const s=Math.min(innerWidth/1920, innerHeight/1080); stage.style.transform=`translate(-50%,-50%) scale(${s})`; }
+const FLUID_BELOW = 0.55;   // below this stage scale the slides reflow instead of shrinking
+function fit(){
+  const s=Math.min(innerWidth/1920, innerHeight/1080), fluid = s < FLUID_BELOW;
+  stage.classList.toggle("fluid", fluid); document.body.classList.toggle("fluid", fluid);
+  stage.style.transform = fluid ? "none" : `translate(-50%,-50%) scale(${s})`;
+}
 addEventListener("resize", fit); fit();
 
 addEventListener("keydown", e=>{
@@ -211,10 +301,14 @@ addEventListener("keydown", e=>{
 stage.addEventListener("click", e=>{
   const t = e.target.closest("[data-go],.vm");
   if (t){ const n = +(t.dataset.go || t.dataset.v); go(slideOfView[n]); return; }
+  // in the reflowed layout only a tap on the picture pages, so taps while reading/scrolling don't jump slides
+  if (stage.classList.contains("fluid") && !e.target.closest(".bg")) return;
   if (!slides[cur].el.classList.contains("idx")) go(cur + (e.clientX > innerWidth/2 ? 1 : -1));
 });
-let tx=null; addEventListener("touchstart",e=>tx=e.touches[0].clientX,{passive:true});
-addEventListener("touchend",e=>{ if(tx==null) return; const dx=e.changedTouches[0].clientX-tx; if(Math.abs(dx)>50) go(cur+(dx<0?1:-1)); tx=null; });
+let tx=null, ty=null; addEventListener("touchstart",e=>{ tx=e.touches[0].clientX; ty=e.touches[0].clientY; },{passive:true});
+addEventListener("touchend",e=>{ if(tx==null) return; const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty; tx=null;
+  if (grid.classList.contains("on")) return;
+  if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5) go(cur+(dx<0?1:-1)); });
 document.getElementById("bPrev").onclick=e=>{e.stopPropagation();go(cur-1)};
 document.getElementById("bNext").onclick=e=>{e.stopPropagation();go(cur+1)};
 document.getElementById("bGrid").onclick=e=>{e.stopPropagation();toggleGrid()};
@@ -222,14 +316,33 @@ document.getElementById("bFull").onclick=e=>{e.stopPropagation();fullscreen()};
 function fullscreen(){ try{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }catch(e){} }
 
 const grid = document.getElementById("grid");
-grid.innerHTML = ["GF","FF"].map(fl=>`<h3>${FL[fl].name}</h3><div class="g">${VIEWS.filter(v=>v.floor==fl).map(v=>
+grid.innerHTML = `<button class="gclose" type="button">Close ✕</button>` + ["GF","FF"].map(fl=>`<h3>${FL[fl].name}</h3><div class="g">${VIEWS.filter(v=>v.floor==fl).map(v=>
   `<figure data-go="${v.n}"><img loading="lazy" src="renders/${v.file}.jpg" alt=""><figcaption><b>${pad(v.n)}</b>${v.area}</figcaption></figure>`).join("")}</div>`).join("");
 grid.addEventListener("click", e=>{ const f=e.target.closest("[data-go]"); if(f){ toggleGrid(); go(slideOfView[+f.dataset.go]); } else toggleGrid(); });
 function toggleGrid(){ grid.classList.toggle("on"); }
 
+if (matchMedia("(hover:none)").matches) document.getElementById("hint").textContent = "Swipe or tap the picture to navigate";
 setTimeout(()=>document.getElementById("hint").style.opacity=0, 4500);
 const start = parseInt((location.hash||"#0").slice(1)) || 0;
 slides[0].el.classList.add("on"); go(start);
+</script>
+<script>
+// ---------- image protection (deterrent: right-click, drag, save / view-source shortcuts) ----------
+(function(){
+  const stop = e => { e.preventDefault(); e.stopPropagation(); return false; };
+  document.addEventListener("contextmenu", stop, true);                       // right-click / long-press menu
+  document.addEventListener("dragstart", e => { if (e.target.closest && e.target.closest("img,svg,a")) stop(e); }, true);
+  document.addEventListener("selectstart", stop, true);
+  document.addEventListener("keydown", e => {
+    const k = (e.key || "").toLowerCase(), mod = e.ctrlKey || e.metaKey;
+    if ((mod && ["s","u","p"].includes(k)) ||                                // save page, view source, print
+        (mod && e.shiftKey && ["i","j","c"].includes(k)) ||                  // dev tools
+        k === "f12") stop(e);
+  }, true);
+  const lockImgs = root => root.querySelectorAll("img").forEach(im => { im.draggable = false; im.setAttribute("oncontextmenu","return false"); });
+  lockImgs(document);
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.querySelectorAll && lockImgs(n.parentNode || n)))).observe(document.body, {childList:true, subtree:true});
+})();
 </script>
 </body>
 </html>
