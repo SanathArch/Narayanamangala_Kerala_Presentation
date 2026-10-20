@@ -83,8 +83,8 @@ body:hover #nav{opacity:1}
 #grid h3{font:600 15px var(--sans);letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:8px 0 18px}
 #grid .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:34px}
 #grid figure{cursor:pointer;position:relative}
-#grid img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-radius:3px;outline:2px solid transparent;transition:outline-color .2s}
-#grid figure:hover img{outline-color:var(--red)}
+#grid :is(img,canvas){width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-radius:3px;outline:2px solid transparent;transition:outline-color .2s}
+#grid figure:hover :is(img,canvas){outline-color:var(--red)}
 #grid figcaption{font-size:13px;color:#d9d2c6;margin-top:7px}
 #grid figcaption b{color:var(--red);margin-right:8px}
 .hint{position:fixed;left:50%;top:66px;transform:translateX(-50%);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(243,239,232,.55);z-index:6;transition:opacity 1s}
@@ -171,7 +171,7 @@ body.fluid #grid figcaption{font-size:12px}
 }
 
 /* ---------- image protection: no drag, no long-press save, no selection ---------- */
-img,svg,image{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none}
+:is(img,canvas),svg,image{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none}
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 
 /* ---------- render viewer: click a picture -> full view with dark / light switch, Esc to go back ---------- */
@@ -198,9 +198,9 @@ body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .vw-x:hover{background:rgba(200,50,31,.85)}
 .vw-x kbd{font:inherit;opacity:.65}
 .vw-ph{position:relative;flex:1;min-height:0;margin:0 clamp(0px,3vw,32px)}
-.vw-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .6s ease}
-.vw-ph img.l{opacity:0}
-#vw.light .vw-ph img.l.ok{opacity:1}
+.vw-ph :is(img,canvas){position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .6s ease}
+.vw-ph :is(img,canvas).l{opacity:0}
+#vw.light .vw-ph :is(img,canvas).l.ok{opacity:1}
 .vw-soon{display:none;position:absolute;left:50%;top:16px;transform:translateX(-50%);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);background:rgba(12,11,10,.7);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:7px 13px;white-space:nowrap}
 #vw.light.nol .vw-soon{display:block}
 .vw-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(12,11,10,.55);
@@ -247,7 +247,7 @@ body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
     <button type="button" class="vw-x" id="vwClose" title="Back to slides (Esc)">✕ Close <kbd>Esc</kbd></button>
   </div>
   <div class="vw-ph">
-    <img class="d" alt="" draggable="false"><img class="l" alt="" draggable="false">
+    <canvas class="d" role="img"></canvas><canvas class="l" aria-hidden="true"></canvas>
     <div class="vw-soon">Light render coming soon</div>
     <button type="button" class="vw-arrow prev" title="Previous view (←)" aria-label="Previous view">‹</button>
     <button type="button" class="vw-arrow next" title="Next view (→)" aria-label="Next view">›</button>
@@ -256,6 +256,51 @@ body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 </div>
 
 <script>
+// ---------- scrambled renders ----------
+// The render files are published as shuffled tiles (renders_s/, renders_light_s/). They are put back in
+// order here and drawn on <canvas>, so a copied file address or a download from the repo is a jumbled picture.
+const SCR = {C:11, R:9, K:0x2f6b1d37, LRU:4};
+function scrPerm(name){
+  let h=0x811c9dc5; for (let i=0;i<name.length;i++){ h^=name.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; }
+  let a=(h^SCR.K)>>>0; const n=SCR.C*SCR.R, p=[...Array(n).keys()];
+  const rnd=()=>{ a=(a+0x6D2B79F5)>>>0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+  for (let i=n-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [p[i],p[j]]=[p[j],p[i]]; }
+  return p;
+}
+const scrCache = new Map();   // url -> Promise<full-size unscrambled canvas> (small LRU)
+function scrFull(url){
+  if (scrCache.has(url)){ const pr=scrCache.get(url); scrCache.delete(url); scrCache.set(url,pr); return pr; }
+  const pr = new Promise((res,rej)=>{
+    const im = new Image(); im.decoding = "async";
+    im.onload = ()=>{
+      const W=im.naturalWidth, H=im.naturalHeight, tw=Math.floor(W/SCR.C/8)*8, th=Math.floor(H/SCR.R/8)*8, p=scrPerm(url);
+      const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+      x.drawImage(im,0,0);
+      for (let i=0;i<p.length;i++) x.drawImage(im,(i%SCR.C)*tw,Math.floor(i/SCR.C)*th,tw,th,(p[i]%SCR.C)*tw,Math.floor(p[i]/SCR.C)*th,tw,th);
+      im.removeAttribute("src"); res(c);
+    };
+    im.onerror = ()=>rej(new Error("missing " + url));
+    im.src = url;
+  });
+  scrCache.set(url,pr); pr.catch(()=>scrCache.delete(url));
+  while (scrCache.size > SCR.LRU) scrCache.delete(scrCache.keys().next().value);
+  return pr;
+}
+// draw url onto canvas cv, sized for where it is shown (opts.w forces a width)
+function scrPaint(cv, url, opts={}){
+  cv._want = url;
+  return scrFull(url).then(full=>{
+    if (cv._want !== url) return false;
+    const A=full.width/full.height, dpr=Math.min(window.devicePixelRatio||1, 2.5), bw=cv.clientWidth, bh=cv.clientHeight;
+    const need = opts.w || ((bw>8 && bh>8) ? Math.max(bw, bh*A)*dpr*1.2 : full.width);
+    const w=Math.min(full.width, Math.max(64, Math.round(need))), h=Math.round(w/A);
+    if (cv.width!==w || cv.height!==h){ cv.width=w; cv.height=h; }
+    const x=cv.getContext("2d"); x.imageSmoothingEnabled=true; x.imageSmoothingQuality="high"; x.drawImage(full,0,0,w,h);
+    cv._painted = url; return true;
+  }, err=>{ if (cv._want !== url) return false; cv._want = null; throw err; });
+}
+function scrRelease(cv){ cv._want = null; cv._painted = null; cv.width = 1; cv.height = 1; }
+
 const VIEWS = [{"n": 1, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_00", "cam": [432, 566], "ang": -1.5708, "cap": "Looking in from the front court, a dining bay set between planters, framed by the arched timber jaali."}, {"n": 2, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_01", "cam": [753, 563], "ang": 3.1416, "cap": "Along the front colonnade, the planter-lined dining bays to the right and the cobbled walk ahead."}, {"n": 3, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_02", "cam": [497, 569], "ang": -0.5734, "cap": "Diagonal view across the bays, through the arches to the red stair beyond."}, {"n": 4, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent__View_00", "cam": [393, 347], "ang": 0.0, "cap": "From the kitchen end, down the length of the dining hall toward the red banquette."}, {"n": 5, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent__View_01", "cam": [654, 308], "ang": 0.3903, "cap": "The banquette corner, with arched jaali openings to the outdoor bays."}, {"n": 6, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent_Looking_At_Spiral_Staircase_View_07", "cam": [722, 372], "ang": -1.3353, "cap": "Looking up at the sculpted red spiral stair to the first floor."}, {"n": 7, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_00", "cam": [445, 137], "ang": 1.9234, "cap": "From the rear verandah into a bench bay, the arch opening back into the hall."}, {"n": 8, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_01", "cam": [720, 131], "ang": -3.1023, "cap": "Rear verandah tables against the timber louvre screen."}, {"n": 9, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_03", "cam": [523, 131], "ang": 0.0, "cap": "Down the louvred verandah toward the garden arch and the courtyard beyond."}, {"n": 10, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_04", "cam": [846, 569], "ang": -1.5708, "cap": "Entering the landscape court from the front, past the dining benches."}, {"n": 11, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_00", "cam": [882, 209], "ang": 1.7819, "cap": "Serpentine planter-benches running along the building's flank."}, {"n": 12, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_02", "cam": [1044, 335], "ang": -2.9617, "cap": "Looking back from the campfire court toward the restaurant."}, {"n": 13, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_03", "cam": [965, 335], "ang": -0.0348, "cap": "Into the campfire court, a curved red-based bench wrapping the gathering space."}, {"n": 14, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_05", "cam": [661, 281], "ang": 3.1416, "cap": "Upper dining room, looking west through the glazed partition to the party hall."}, {"n": 15, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_06", "cam": [419, 314], "ang": -0.1007, "cap": "Toward the east gable wall with its arched jaali windows."}, {"n": 16, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_04", "cam": [772, 510], "ang": 3.1416, "cap": "The south dining room under the timber-slat ceiling, with the open timber frame to the left."}, {"n": 17, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_00", "cam": [353, 216], "ang": 2.0803, "cap": "From the back of the hall over the seating toward the louvred front."}, {"n": 18, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_01", "cam": [327, 497], "ang": -2.125, "cap": "From the front, back over the seating to the arched jaali windows."}, {"n": 19, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_02", "cam": [150, 419], "ang": -0.5796, "cap": "Across the seating toward the glazed partition into the restaurant."}];
 const VB = "48 52 1078 568";
 const FL = {GF:{name:"Ground Floor", base:"keyplan/Ground_Floor_Keyplan_Base.svg"},
@@ -292,7 +337,7 @@ function planSVG(floor, inner){
 const slides = [];
 function add(html, cls, img){ slides.push({html, cls, img}); }
 
-add(`<img class="bg" data-src="renders/Ground_Floor_Restaurent__View_00.jpg" alt="">
+add(`<canvas class="bg" data-src="renders_s/Ground_Floor_Restaurent__View_00.jpg" aria-hidden="true"></canvas>
   <div class="shade"></div>
   <div class="in">
     <div class="kick"><i></i>Render Views · Batch 00</div>
@@ -321,7 +366,7 @@ for (const fl of ["GF","FF"]){
   for (const v of vs){
     slideOfView[v.n] = slides.length;
     const others = vs.filter(o=>o.n!==v.n).map(ghost).join("");
-    add(`<img class="bg" data-src="renders/${v.file}.jpg" alt="${v.area}, view ${v.n}">
+    add(`<canvas class="bg" data-src="renders_s/${v.file}.jpg" role="img" aria-label="${v.area}, view ${v.n}"></canvas>
       <div class="shade top"></div><div class="shade"></div>
       <div class="hdr"><span>${PROJECT}</span><span><b>${pad(v.n)}</b> / ${pad(total)}</span></div>
       <div class="cap">
@@ -342,11 +387,12 @@ slides.forEach((s,i)=>{ const d=document.createElement("section"); d.className="
 
 // ---------- navigation ----------
 let cur = 0;
-function load(i){ const s=slides[i]; if(!s) return; s.el.querySelectorAll("img[data-src]").forEach(im=>{ im.src=im.dataset.src; im.removeAttribute("data-src"); }); }
+function load(i){ const s=slides[i]; if(!s) return; s.el.querySelectorAll("canvas[data-src]").forEach(cv=>{ const u=cv.dataset.src; if(cv._painted!==u && cv._want!==u) scrPaint(cv,u).catch(()=>{}); }); }
 function go(i){
   i = Math.max(0, Math.min(slides.length-1, i));
   slides[cur].el.classList.remove("on"); cur=i; slides[cur].el.classList.add("on"); slides[cur].el.scrollTop=0;
   [i,i+1,i+2,i-1].forEach(load);
+  slides.forEach((s,j)=>{ if (Math.abs(j-cur)>3) s.el.querySelectorAll("canvas[data-src]").forEach(cv=>{ if(cv._painted||cv._want) scrRelease(cv); }); });
   document.getElementById("bar").style.width = (100*(cur)/(slides.length-1))+"%";
   try{ history.replaceState(null,"","#"+cur); }catch(e){}
 }
@@ -385,13 +431,14 @@ function fullscreen(){ try{ document.fullscreenElement ? document.exitFullscreen
 
 const grid = document.getElementById("grid");
 grid.innerHTML = `<button class="gclose" type="button">Close ✕</button>` + ["GF","FF"].map(fl=>`<h3>${FL[fl].name}</h3><div class="g">${VIEWS.filter(v=>v.floor==fl).map(v=>
-  `<figure data-go="${v.n}"><img loading="lazy" src="renders/${v.file}.jpg" alt=""><figcaption><b>${pad(v.n)}</b>${v.area}</figcaption></figure>`).join("")}</div>`).join("");
+  `<figure data-go="${v.n}"><canvas data-src="renders_s/${v.file}.jpg" aria-hidden="true"></canvas><figcaption><b>${pad(v.n)}</b>${v.area}</figcaption></figure>`).join("")}</div>`).join("");
 grid.addEventListener("click", e=>{ const f=e.target.closest("[data-go]"); if(f){ toggleGrid(); go(slideOfView[+f.dataset.go]); } else toggleGrid(); });
-function toggleGrid(){ grid.classList.toggle("on"); }
+function toggleGrid(){ grid.classList.toggle("on");
+  if (grid.classList.contains("on")) grid.querySelectorAll("canvas[data-src]").forEach(cv=>{ if(!cv._painted && !cv._want) scrPaint(cv,cv.dataset.src).catch(()=>{}); }); }
 
 if (matchMedia("(hover:none)").matches) document.getElementById("hint").textContent = "Swipe or tap the picture to navigate";
 // ---------- render viewer (click / tap a picture: dark ⇄ light, Esc to return) ----------
-const vwEl = document.getElementById("vw"), vwD = vwEl.querySelector("img.d"), vwL = vwEl.querySelector("img.l");
+const vwEl = document.getElementById("vw"), vwD = vwEl.querySelector("canvas.d"), vwL = vwEl.querySelector("canvas.l");
 const vwNo = document.getElementById("vwNo"), vwName = document.getElementById("vwName"), vwCap = document.getElementById("vwCap");
 const vwPrev = vwEl.querySelector(".vw-arrow.prev"), vwNext = vwEl.querySelector(".vw-arrow.next");
 const vwModeBtns = [...vwEl.querySelectorAll(".vw-mode button")];
@@ -404,14 +451,13 @@ function vwShow(v){
   vwNo.textContent = `View ${pad(v.n)} / ${pad(total)}`;
   vwName.textContent = `${FL[v.floor].name} · ${v.area}`;
   vwCap.innerHTML = `${v.cap}<small>${TOUCH ? "Swipe for next view · swipe down to close" : "← → next view · D / L dark or light · Esc back to slides"}</small>`;
-  vwD.src = `renders/${v.file}.jpg`; vwD.alt = `${v.area}, view ${v.n}`;
-  vwL.classList.remove("ok"); vwEl.classList.remove("nol"); vwL.onload = vwL.onerror = null;
-  if (lightOK[v.file] === false){ vwL.removeAttribute("src"); vwEl.classList.add("nol"); }
-  else {
-    vwL.onload  = ()=>{ lightOK[v.file] = true;  vwL.classList.add("ok"); };
-    vwL.onerror = ()=>{ lightOK[v.file] = false; vwL.removeAttribute("src"); vwEl.classList.add("nol"); };
-    vwL.src = `renders_light/${v.file}.jpg`;
-  }
+  vwD.setAttribute("aria-label", `${v.area}, view ${v.n}`);
+  scrPaint(vwD, `renders_s/${v.file}.jpg`, {w:4000}).catch(()=>{});
+  vwL.classList.remove("ok"); vwEl.classList.remove("nol");
+  if (lightOK[v.file] === false){ scrRelease(vwL); vwEl.classList.add("nol"); }
+  else scrPaint(vwL, `renders_light_s/${v.file}.jpg`, {w:4000})
+         .then(ok=>{ if (ok){ lightOK[v.file] = true; vwL.classList.add("ok"); } })
+         .catch(()=>{ lightOK[v.file] = false; scrRelease(vwL); vwEl.classList.add("nol"); });
   vwPrev.disabled = vwStepTarget(-1) < 0; vwNext.disabled = vwStepTarget(1) < 0;
 }
 function vwSetMode(m){
@@ -426,7 +472,7 @@ function vwOpen(){
   vwEl.classList.add("on"); vwEl.setAttribute("aria-hidden","false");
   try{ document.getElementById("vwClose").focus({preventScroll:true}); }catch(e){}
 }
-function vwClose(){ vwEl.classList.remove("on"); vwEl.setAttribute("aria-hidden","true"); try{ document.activeElement.blur(); }catch(e){} }
+function vwClose(){ scrRelease(vwD); scrRelease(vwL); vwEl.classList.remove("on"); vwEl.setAttribute("aria-hidden","true"); try{ document.activeElement.blur(); }catch(e){} }
 function vwStep(d){ const i = vwStepTarget(d); if (i<0) return; go(i); vwShow(viewOfSlide(i)); }
 
 // add a small "Dark / Light" button on every view slide, and open the viewer from the picture
