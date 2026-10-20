@@ -173,6 +173,57 @@ body.fluid #grid figcaption{font-size:12px}
 /* ---------- image protection: no drag, no long-press save, no selection ---------- */
 img,svg,image{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none}
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+
+/* ---------- render viewer: click a picture -> full view with dark / light switch, Esc to go back ---------- */
+.view .bg,.view .shade{cursor:zoom-in}
+.vbtn{position:absolute;left:64px;top:96px;z-index:3;display:flex;align-items:center;gap:10px;background:rgba(12,11,10,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  color:var(--ink);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:10px 18px;font:700 14px var(--sans);letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:background .25s}
+.vbtn:hover{background:rgba(200,50,31,.85)}
+.vbtn svg{width:18px;height:18px;flex:none}
+#stage.fluid .vbtn{left:26px;top:calc(50px + env(safe-area-inset-top,0px));font-size:10px;padding:7px 12px;gap:7px}
+#stage.fluid .vbtn svg{width:13px;height:13px}
+
+#vw{position:fixed;inset:0;z-index:30;background:#0a0908;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:opacity .35s ease,visibility 0s linear .35s}
+#vw.on{opacity:1;visibility:visible;transition:opacity .35s ease}
+.vw-top{flex:none;display:flex;align-items:center;gap:clamp(10px,2vw,24px);padding:calc(12px + env(safe-area-inset-top,0px)) clamp(12px,3vw,32px) 12px}
+.vw-t{flex:1;min-width:0;display:flex;gap:12px;align-items:baseline;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vw-t b{color:var(--ink);font-weight:700}
+.vw-t span{overflow:hidden;text-overflow:ellipsis}
+.vw-mode{flex:none;display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px;background:rgba(255,255,255,.04)}
+.vw-mode button{appearance:none;border:0;background:transparent;color:var(--muted);font:700 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:8px 14px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .25s,color .25s}
+.vw-mode button svg{width:13px;height:13px;flex:none}
+.vw-mode button:hover{color:var(--ink)}
+.vw-mode button[aria-pressed="true"]{background:var(--ink);color:var(--char)}
+.vw-x{flex:none;appearance:none;background:rgba(255,255,255,.06);color:var(--ink);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:8px 14px;font:700 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;cursor:pointer;display:flex;gap:8px;align-items:center}
+.vw-x:hover{background:rgba(200,50,31,.85)}
+.vw-x kbd{font:inherit;opacity:.65}
+.vw-ph{position:relative;flex:1;min-height:0;margin:0 clamp(0px,3vw,32px)}
+.vw-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .6s ease}
+.vw-ph img.l{opacity:0}
+#vw.light .vw-ph img.l.ok{opacity:1}
+.vw-soon{display:none;position:absolute;left:50%;top:16px;transform:translateX(-50%);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);background:rgba(12,11,10,.7);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:7px 13px;white-space:nowrap}
+#vw.light.nol .vw-soon{display:block}
+.vw-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(12,11,10,.55);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--ink);font:400 30px/1 var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;padding-bottom:4px}
+.vw-arrow:hover{background:rgba(200,50,31,.85)}
+.vw-arrow:disabled{opacity:.25;cursor:default;background:rgba(12,11,10,.55)}
+.vw-arrow.prev{left:clamp(6px,1.6vw,20px)} .vw-arrow.next{right:clamp(6px,1.6vw,20px)}
+.vw-cap{flex:none;padding:12px clamp(14px,3vw,32px) calc(14px + env(safe-area-inset-bottom,0px));text-align:center;font-size:14px;line-height:1.5;color:#d9d2c6}
+.vw-cap small{display:block;margin-top:4px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(243,239,232,.45)}
+#vw button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media (max-width:640px){
+  .vw-t{font-size:10px;letter-spacing:.14em;gap:8px}
+  .vw-t span{display:none}
+  .vw-mode button{padding:8px 11px}
+  .vw-x kbd{display:none}
+  .vw-arrow{width:42px;height:42px;font-size:24px}
+  .vw-cap{font-size:13px}
+}
+@media (hover:none){ .vw-x kbd{display:none} }
+@media (orientation:landscape) and (max-height:500px){
+  .vw-top{padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:6px}
+  .vw-cap{display:none}
+}
 </style>
 </head>
 <body>
@@ -186,6 +237,23 @@ body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 </div>
 <div id="grid"></div>
 <div class="hint" id="hint">← → to navigate · G all views · F fullscreen</div>
+<div id="vw" role="dialog" aria-modal="true" aria-label="Render viewer" aria-hidden="true">
+  <div class="vw-top">
+    <div class="vw-t"><b id="vwNo"></b><span id="vwName"></span></div>
+    <div class="vw-mode" role="group" aria-label="Render lighting">
+      <button type="button" data-m="dark" aria-pressed="true" title="Dark render (D)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5a6 6 0 1 0 7.7 7.7z" fill="currentColor"/></svg>Dark</button>
+      <button type="button" data-m="light" aria-pressed="false" title="Light render (L)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3 3l1.1 1.1M11.9 11.9 13 13M13 3l-1.1 1.1M4.1 11.9 3 13"/></g></svg>Light</button>
+    </div>
+    <button type="button" class="vw-x" id="vwClose" title="Back to slides (Esc)">✕ Close <kbd>Esc</kbd></button>
+  </div>
+  <div class="vw-ph">
+    <img class="d" alt="" draggable="false"><img class="l" alt="" draggable="false">
+    <div class="vw-soon">Light render coming soon</div>
+    <button type="button" class="vw-arrow prev" title="Previous view (←)" aria-label="Previous view">‹</button>
+    <button type="button" class="vw-arrow next" title="Next view (→)" aria-label="Next view">›</button>
+  </div>
+  <div class="vw-cap" id="vwCap"></div>
+</div>
 
 <script>
 const VIEWS = [{"n": 1, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_00", "cam": [432, 566], "ang": -1.5708, "cap": "Looking in from the front court, a dining bay set between planters, framed by the arched timber jaali."}, {"n": 2, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_01", "cam": [753, 563], "ang": 3.1416, "cap": "Along the front colonnade, the planter-lined dining bays to the right and the cobbled walk ahead."}, {"n": 3, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_02", "cam": [497, 569], "ang": -0.5734, "cap": "Diagonal view across the bays, through the arches to the red stair beyond."}, {"n": 4, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent__View_00", "cam": [393, 347], "ang": 0.0, "cap": "From the kitchen end, down the length of the dining hall toward the red banquette."}, {"n": 5, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent__View_01", "cam": [654, 308], "ang": 0.3903, "cap": "The banquette corner, with arched jaali openings to the outdoor bays."}, {"n": 6, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent_Looking_At_Spiral_Staircase_View_07", "cam": [722, 372], "ang": -1.3353, "cap": "Looking up at the sculpted red spiral stair to the first floor."}, {"n": 7, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_00", "cam": [445, 137], "ang": 1.9234, "cap": "From the rear verandah into a bench bay, the arch opening back into the hall."}, {"n": 8, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_01", "cam": [720, 131], "ang": -3.1023, "cap": "Rear verandah tables against the timber louvre screen."}, {"n": 9, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_03", "cam": [523, 131], "ang": 0.0, "cap": "Down the louvred verandah toward the garden arch and the courtyard beyond."}, {"n": 10, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_04", "cam": [846, 569], "ang": -1.5708, "cap": "Entering the landscape court from the front, past the dining benches."}, {"n": 11, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_00", "cam": [882, 209], "ang": 1.7819, "cap": "Serpentine planter-benches running along the building's flank."}, {"n": 12, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_02", "cam": [1044, 335], "ang": -2.9617, "cap": "Looking back from the campfire court toward the restaurant."}, {"n": 13, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_03", "cam": [965, 335], "ang": -0.0348, "cap": "Into the campfire court, a curved red-based bench wrapping the gathering space."}, {"n": 14, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_05", "cam": [661, 281], "ang": 3.1416, "cap": "Upper dining room, looking west through the glazed partition to the party hall."}, {"n": 15, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_06", "cam": [419, 314], "ang": -0.1007, "cap": "Toward the east gable wall with its arched jaali windows."}, {"n": 16, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_04", "cam": [772, 510], "ang": 3.1416, "cap": "The south dining room under the timber-slat ceiling, with the open timber frame to the left."}, {"n": 17, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_00", "cam": [353, 216], "ang": 2.0803, "cap": "From the back of the hall over the seating toward the louvred front."}, {"n": 18, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_01", "cam": [327, 497], "ang": -2.125, "cap": "From the front, back over the seating to the arched jaali windows."}, {"n": 19, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_02", "cam": [150, 419], "ang": -0.5796, "cap": "Across the seating toward the glazed partition into the restaurant."}];
@@ -322,6 +390,90 @@ grid.addEventListener("click", e=>{ const f=e.target.closest("[data-go]"); if(f)
 function toggleGrid(){ grid.classList.toggle("on"); }
 
 if (matchMedia("(hover:none)").matches) document.getElementById("hint").textContent = "Swipe or tap the picture to navigate";
+// ---------- render viewer (click / tap a picture: dark ⇄ light, Esc to return) ----------
+const vwEl = document.getElementById("vw"), vwD = vwEl.querySelector("img.d"), vwL = vwEl.querySelector("img.l");
+const vwNo = document.getElementById("vwNo"), vwName = document.getElementById("vwName"), vwCap = document.getElementById("vwCap");
+const vwPrev = vwEl.querySelector(".vw-arrow.prev"), vwNext = vwEl.querySelector(".vw-arrow.next");
+const vwModeBtns = [...vwEl.querySelectorAll(".vw-mode button")];
+const viewOfSlide = i => { const f = slides[i] && slides[i].img; return f ? VIEWS.find(v=>v.file===f) : null; };
+const lightOK = {};
+let vwMode = "dark"; try{ if (localStorage.getItem("renderMode")==="light") vwMode = "light"; }catch(e){}
+const TOUCH = matchMedia("(hover:none)").matches;
+function vwStepTarget(d){ let i = cur + d; while (i>=0 && i<slides.length && !viewOfSlide(i)) i += d; return (i>=0 && i<slides.length) ? i : -1; }
+function vwShow(v){
+  vwNo.textContent = `View ${pad(v.n)} / ${pad(total)}`;
+  vwName.textContent = `${FL[v.floor].name} · ${v.area}`;
+  vwCap.innerHTML = `${v.cap}<small>${TOUCH ? "Swipe for next view · swipe down to close" : "← → next view · D / L dark or light · Esc back to slides"}</small>`;
+  vwD.src = `renders/${v.file}.jpg`; vwD.alt = `${v.area}, view ${v.n}`;
+  vwL.classList.remove("ok"); vwEl.classList.remove("nol"); vwL.onload = vwL.onerror = null;
+  if (lightOK[v.file] === false){ vwL.removeAttribute("src"); vwEl.classList.add("nol"); }
+  else {
+    vwL.onload  = ()=>{ lightOK[v.file] = true;  vwL.classList.add("ok"); };
+    vwL.onerror = ()=>{ lightOK[v.file] = false; vwL.removeAttribute("src"); vwEl.classList.add("nol"); };
+    vwL.src = `renders_light/${v.file}.jpg`;
+  }
+  vwPrev.disabled = vwStepTarget(-1) < 0; vwNext.disabled = vwStepTarget(1) < 0;
+}
+function vwSetMode(m){
+  vwMode = m; vwEl.classList.toggle("light", m==="light");
+  vwModeBtns.forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.m===m)));
+  try{ localStorage.setItem("renderMode", m); }catch(e){}
+}
+function vwOpen(){
+  const v = viewOfSlide(cur); if (!v) return;
+  if (grid.classList.contains("on")) toggleGrid();
+  vwShow(v); vwSetMode(vwMode);
+  vwEl.classList.add("on"); vwEl.setAttribute("aria-hidden","false");
+  try{ document.getElementById("vwClose").focus({preventScroll:true}); }catch(e){}
+}
+function vwClose(){ vwEl.classList.remove("on"); vwEl.setAttribute("aria-hidden","true"); try{ document.activeElement.blur(); }catch(e){} }
+function vwStep(d){ const i = vwStepTarget(d); if (i<0) return; go(i); vwShow(viewOfSlide(i)); }
+
+// add a small "Dark / Light" button on every view slide, and open the viewer from the picture
+slides.forEach(s=>{ if (!s.img) return;
+  const b = document.createElement("button"); b.type = "button"; b.className = "vbtn"; b.title = "View this render in dark / light (V)";
+  b.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg>Dark / Light`;
+  s.el.appendChild(b);
+});
+stage.addEventListener("click", e=>{
+  if (!e.target.closest(".view .bg, .view .shade, .vbtn")) return;
+  e.stopPropagation(); vwOpen();
+}, true);
+
+vwModeBtns.forEach(b=>b.addEventListener("click", ()=>vwSetMode(b.dataset.m)));
+document.getElementById("vwClose").addEventListener("click", vwClose);
+vwPrev.addEventListener("click", ()=>vwStep(-1));
+vwNext.addEventListener("click", ()=>vwStep(1));
+
+document.addEventListener("keydown", e=>{
+  if (!vwEl.classList.contains("on")){
+    if ((e.key==="v"||e.key==="V") && viewOfSlide(cur) && !grid.classList.contains("on")){ e.preventDefault(); e.stopPropagation(); vwOpen(); }
+    return;
+  }
+  const k = e.key; let used = true;
+  if (k==="Escape") vwClose();
+  else if (["ArrowRight","PageDown"," "].includes(k)) vwStep(1);
+  else if (["ArrowLeft","PageUp"].includes(k)) vwStep(-1);
+  else if (k==="l"||k==="L") vwSetMode("light");
+  else if (k==="d"||k==="D") vwSetMode("dark");
+  else if (k==="t"||k==="T"||k==="Enter") vwSetMode(vwMode==="light" ? "dark" : "light");
+  else if (k==="f"||k==="F") fullscreen();
+  else used = false;
+  if (used) e.preventDefault();
+  e.stopPropagation();                         // slider shortcuts are paused while the viewer is open
+}, true);
+
+// touch: swipe left / right for the next view, swipe down to close (does not reach the slider's own swipe)
+let vx0=null, vy0=null;
+vwEl.addEventListener("touchstart", e=>{ e.stopPropagation(); if (e.touches.length!==1){ vx0=null; return; } vx0=e.touches[0].clientX; vy0=e.touches[0].clientY; }, {passive:true});
+vwEl.addEventListener("touchend", e=>{ e.stopPropagation(); if (vx0==null) return;
+  const dx=e.changedTouches[0].clientX-vx0, dy=e.changedTouches[0].clientY-vy0; vx0=null;
+  if (Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5) vwStep(dx<0?1:-1);
+  else if (dy>90 && Math.abs(dy)>Math.abs(dx)*1.5) vwClose();
+});
+document.getElementById("hint").textContent = TOUCH ? "Swipe to navigate · tap a picture for dark / light"
+                                                     : "← → navigate · click a picture for dark / light · G all views · F fullscreen";
+
 setTimeout(()=>document.getElementById("hint").style.opacity=0, 4500);
 const start = parseInt((location.hash||"#0").slice(1)) || 0;
 slides[0].el.classList.add("on"); go(start);
