@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restaurant Render Views</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#f3efe8; --muted:#b9b1a5; --paper:#f6f2ea; --char:#151311; --char2:#1f1c19;
+  --red:#c8321f; --line:rgba(243,239,232,.18);
+  --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --sans:Manrope,"Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0c0b0a;color:var(--ink);font-family:var(--sans);overflow:hidden}
+#viewport{position:fixed;inset:0;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center;background:var(--char);overflow:hidden}
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .55s ease,visibility 0s linear .55s}
+.slide.on{opacity:1;visibility:visible;transition:opacity .55s ease}
+.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#222}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,11,10,0) 55%,rgba(12,11,10,.55) 78%,rgba(12,11,10,.86) 100%)}
+.shade.top{background:linear-gradient(180deg,rgba(12,11,10,.55) 0%,rgba(12,11,10,0) 18%)}
+
+/* header strip on every view */
+.hdr{position:absolute;left:64px;right:64px;top:44px;display:flex;justify-content:space-between;align-items:center;
+  font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:rgba(243,239,232,.82)}
+.hdr b{font-weight:700;color:var(--ink)}
+
+/* caption block */
+.cap{position:absolute;left:64px;bottom:60px;width:1180px}
+.cap .no{font-family:var(--sans);font-size:16px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);display:flex;gap:18px;align-items:center}
+.cap .no i{display:inline-block;width:46px;height:2px;background:var(--red)}
+.cap h2{font-family:var(--serif);font-weight:600;font-size:76px;line-height:1.02;margin:14px 0 14px;letter-spacing:.005em}
+.cap p{font-size:22px;line-height:1.5;color:#e2dbd0;max-width:980px}
+
+/* key plan card */
+.kp{position:absolute;right:56px;bottom:52px;width:560px;background:var(--paper);color:#1d1b18;border-radius:4px;
+  box-shadow:0 18px 50px rgba(0,0,0,.45);padding:16px 18px 14px}
+.kp .t{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;margin-bottom:10px}
+.kp .t span:last-child{color:#7c746a;font-weight:500}
+.kp svg{display:block;width:100%;height:auto;background:#fff}
+.kp .f{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-size:12px;color:#6d665d;letter-spacing:.06em}
+.kp .f .lg{display:flex;align-items:center;gap:8px}
+.kp .f .lg svg{width:22px;height:16px;background:none}
+
+/* cover */
+.cover .shade{background:linear-gradient(90deg,rgba(12,11,10,.92) 0%,rgba(12,11,10,.72) 40%,rgba(12,11,10,.1) 75%)}
+.cover .in{position:absolute;left:110px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;width:880px}
+.cover .kick{font-size:17px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:18px}
+.cover .kick i{width:56px;height:2px;background:var(--red)}
+.cover h1{font-family:var(--serif);font-weight:600;font-size:132px;line-height:.95;margin:34px 0 26px}
+.cover .sub{font-family:var(--serif);font-size:40px;color:#e7e0d4}
+.cover .meta{margin-top:70px;display:flex;gap:56px;font-size:15px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.cover .meta b{display:block;font-family:var(--serif);font-size:54px;letter-spacing:0;color:var(--ink);font-weight:600;margin-bottom:6px;text-transform:none}
+
+/* floor index */
+.idx{background:var(--char)}
+.idx .side{position:absolute;left:72px;top:72px;bottom:72px;width:430px;display:flex;flex-direction:column}
+.idx .side .kick{font-size:15px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
+.idx .side h2{font-family:var(--serif);font-weight:600;font-size:92px;line-height:1;margin:18px 0 10px}
+.idx .side .d{font-size:18px;color:#cfc7bb;line-height:1.55;margin-bottom:30px}
+.idx ol{list-style:none;overflow:hidden;flex:1;columns:1}
+.idx li{display:flex;gap:16px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line);font-size:17px;cursor:pointer;color:#e7e0d4}
+.idx li:hover{color:#fff}
+.idx li em{font-style:normal;font-weight:700;color:var(--red);width:30px;flex:none;font-size:15px}
+.idx li small{color:var(--muted);font-size:14px;margin-left:auto;white-space:nowrap}
+.idx .plan{position:absolute;right:72px;top:72px;width:1330px;background:#fff;border-radius:4px;padding:18px;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.idx .plan svg{display:block;width:100%;height:auto}
+.idx .plan .vm{cursor:pointer}
+.idx .plan .vm:hover path{fill-opacity:.45}
+.idx .note{margin-top:14px;display:flex;color:#6d665d !important;justify-content:space-between;font-size:15px;color:var(--muted);letter-spacing:.04em}
+
+/* chrome */
+#bar{position:fixed;left:0;bottom:0;height:3px;background:var(--red);transition:width .45s ease;z-index:5}
+#nav{position:fixed;left:50%;transform:translateX(-50%);top:14px;display:flex;gap:8px;z-index:6;opacity:.0;transition:opacity .3s}
+body:hover #nav{opacity:1}
+#nav button{background:rgba(20,18,16,.72);color:var(--ink);border:1px solid rgba(255,255,255,.16);border-radius:3px;padding:8px 13px;font:600 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+#nav button:hover{background:rgba(200,50,31,.85)}
+#grid{position:fixed;inset:0;background:rgba(10,9,8,.97);z-index:10;display:none;overflow:auto;padding:46px 54px}
+#grid.on{display:block}
+#grid h3{font:600 15px var(--sans);letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:8px 0 18px}
+#grid .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:34px}
+#grid figure{cursor:pointer;position:relative}
+#grid :is(img,canvas){width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-radius:3px;outline:2px solid transparent;transition:outline-color .2s}
+#grid figure:hover :is(img,canvas){outline-color:var(--red)}
+#grid figcaption{font-size:13px;color:#d9d2c6;margin-top:7px}
+#grid figcaption b{color:var(--red);margin-right:8px}
+.hint{position:fixed;left:50%;top:66px;transform:translateX(-50%);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(243,239,232,.55);z-index:6;transition:opacity 1s}
+#grid .gclose{position:sticky;top:0;float:right;z-index:2;background:rgba(20,18,16,.85);color:var(--ink);border:1px solid rgba(255,255,255,.16);border-radius:3px;padding:8px 13px;font:600 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+#grid .gclose:hover{background:rgba(200,50,31,.85)}
+.mk-m{display:none}
+
+/* ---------- fluid layout: phones, small tablets, short windows ----------
+   The 1920x1080 stage is kept for laptops / projectors. When it would scale
+   below ~55% (text too small to read) the script adds .fluid and the slides
+   reflow to the screen instead of being shrunk. */
+@media (hover:none){ #nav{opacity:1} }
+#stage.fluid{left:0;top:0;width:100%;height:100%}
+#stage.fluid .slide{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+#stage.fluid .mk-d{display:none}
+#stage.fluid .mk-m{display:inline}
+
+/* view slides */
+#stage.fluid .view{display:flex;flex-direction:column}
+#stage.fluid .view .shade{display:none}
+#stage.fluid .hdr{position:relative;left:auto;right:auto;top:auto;order:0;gap:14px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;font-size:10px;letter-spacing:.18em}
+#stage.fluid .hdr span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#stage.fluid .hdr span:last-child{flex:none}
+#stage.fluid .view .bg{position:relative;inset:auto;height:auto;aspect-ratio:16/10;flex:none;order:1}
+#stage.fluid .cap{position:relative;left:auto;bottom:auto;width:auto;order:2;padding:18px 16px 0}
+#stage.fluid .cap .no{font-size:11px;letter-spacing:.18em;gap:10px}
+#stage.fluid .cap .no i{width:28px}
+#stage.fluid .cap h2{font-size:clamp(30px,8vw,52px);margin:8px 0}
+#stage.fluid .cap p{font-size:15px}
+#stage.fluid .kp{position:relative;right:auto;bottom:auto;width:auto;max-width:600px;order:3;margin:18px 16px 0;padding:12px 12px 10px;box-shadow:none}
+#stage.fluid .kp .t{font-size:11px;margin-bottom:8px}
+#stage.fluid .kp .f{font-size:10px;gap:10px}
+#stage.fluid .kp .f>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* cover */
+#stage.fluid .cover .shade{background:linear-gradient(180deg,rgba(12,11,10,.3) 0%,rgba(12,11,10,.55) 40%,rgba(12,11,10,.93) 100%)}
+#stage.fluid .cover .in{left:0;right:0;width:auto;justify-content:flex-end;padding:24px 20px calc(96px + env(safe-area-inset-bottom,0px))}
+#stage.fluid .cover .kick{font-size:11px;letter-spacing:.24em;gap:12px}
+#stage.fluid .cover .kick i{width:32px}
+#stage.fluid .cover h1{font-size:clamp(44px,12vw,96px);margin:18px 0 12px}
+#stage.fluid .cover .sub{font-size:clamp(20px,5.4vw,32px)}
+#stage.fluid .cover .meta{margin-top:28px;gap:clamp(18px,6vw,40px);font-size:10px;letter-spacing:.14em}
+#stage.fluid .cover .meta b{font-size:clamp(30px,8vw,44px)}
+
+/* floor index */
+#stage.fluid .idx{padding-top:calc(22px + env(safe-area-inset-top,0px));padding-left:16px;padding-right:16px}
+#stage.fluid .idx .side{position:relative;left:auto;top:auto;bottom:auto;width:auto}
+#stage.fluid .idx .side .kick{font-size:11px}
+#stage.fluid .idx .side h2{font-size:clamp(40px,10vw,64px);margin:10px 0 6px}
+#stage.fluid .idx .side .d{font-size:15px;margin-bottom:16px}
+#stage.fluid .idx ol{overflow:visible;flex:none}
+#stage.fluid .idx li{font-size:15px;padding:11px 0}
+#stage.fluid .idx .plan{position:relative;right:auto;top:auto;width:auto;margin-top:22px;padding:10px}
+#stage.fluid .idx .note{font-size:11px;flex-wrap:wrap;gap:6px 16px;margin-top:10px}
+
+/* chrome in fluid mode */
+body.fluid #nav{opacity:1;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));gap:6px}
+body.fluid #nav button{white-space:nowrap;padding:10px 14px;background:rgba(20,18,16,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+body.fluid .hint{top:auto;bottom:calc(70px + env(safe-area-inset-bottom,0px));width:max-content;max-width:90vw;text-align:center;font-size:10px}
+body.fluid #grid{padding:16px}
+body.fluid #grid .g{grid-template-columns:repeat(auto-fill,minmax(min(260px,40vw),1fr));gap:12px;margin-bottom:26px}
+body.fluid #grid figcaption{font-size:12px}
+@media (max-width:480px){ body.fluid #bFull{display:none} }
+
+/* phones held sideways: picture beside the text */
+@media (orientation:landscape){
+  #stage.fluid .view{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:20px;padding-left:16px;padding-right:16px}
+  #stage.fluid .hdr{grid-column:1/-1;padding-left:0;padding-right:0}
+  #stage.fluid .view .bg{grid-column:1;grid-row:2/4;border-radius:3px}
+  #stage.fluid .cap{grid-column:2;padding:0}
+  #stage.fluid .cap h2{font-size:clamp(26px,4.4vw,44px)}
+  #stage.fluid .cap p{font-size:14px}
+  #stage.fluid .kp{grid-column:2;margin:14px 0 0;max-width:none}
+  #stage.fluid .cover .shade{background:linear-gradient(90deg,rgba(12,11,10,.92) 0%,rgba(12,11,10,.7) 45%,rgba(12,11,10,.2) 85%)}
+  #stage.fluid .cover .in{justify-content:center;padding-bottom:56px;max-width:720px}
+  #stage.fluid .idx{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,1.3fr);gap:24px;align-items:start}
+  #stage.fluid .idx .plan{margin-top:0}
+  #stage.fluid .idx .side h2{font-size:clamp(32px,5vw,56px)}
+}
+@media (orientation:landscape) and (max-height:480px){
+  #stage.fluid .cover h1{font-size:clamp(36px,7vw,64px);margin:10px 0 8px}
+  #stage.fluid .cover .meta{margin-top:16px}
+  #stage.fluid .cover .meta b{font-size:30px}
+}
+
+/* ---------- image protection: no drag, no long-press save, no selection ---------- */
+:is(img,canvas),svg,image{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+
+/* ---------- render viewer: click a picture -> full view with dark / light switch, Esc to go back ---------- */
+.view .bg,.view .shade{cursor:zoom-in}
+.vbtn{position:absolute;left:64px;top:96px;z-index:3;display:flex;align-items:center;gap:10px;background:rgba(12,11,10,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  color:var(--ink);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:10px 18px;font:700 14px var(--sans);letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:background .25s}
+.vbtn:hover{background:rgba(200,50,31,.85)}
+.vbtn svg{width:18px;height:18px;flex:none}
+#stage.fluid .vbtn{left:26px;top:calc(50px + env(safe-area-inset-top,0px));font-size:10px;padding:7px 12px;gap:7px}
+#stage.fluid .vbtn svg{width:13px;height:13px}
+
+#vw{position:fixed;inset:0;z-index:30;background:#0a0908;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:opacity .35s ease,visibility 0s linear .35s}
+#vw.on{opacity:1;visibility:visible;transition:opacity .35s ease}
+.vw-top{flex:none;display:flex;align-items:center;gap:clamp(10px,2vw,24px);padding:calc(12px + env(safe-area-inset-top,0px)) clamp(12px,3vw,32px) 12px}
+.vw-t{flex:1;min-width:0;display:flex;gap:12px;align-items:baseline;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vw-t b{color:var(--ink);font-weight:700}
+.vw-t span{overflow:hidden;text-overflow:ellipsis}
+.vw-mode{flex:none;display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px;background:rgba(255,255,255,.04)}
+.vw-mode button{appearance:none;border:0;background:transparent;color:var(--muted);font:700 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:8px 14px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .25s,color .25s}
+.vw-mode button svg{width:13px;height:13px;flex:none}
+.vw-mode button:hover{color:var(--ink)}
+.vw-mode button[aria-pressed="true"]{background:var(--ink);color:var(--char)}
+.vw-x{flex:none;appearance:none;background:rgba(255,255,255,.06);color:var(--ink);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:8px 14px;font:700 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;cursor:pointer;display:flex;gap:8px;align-items:center}
+.vw-x:hover{background:rgba(200,50,31,.85)}
+.vw-x kbd{font:inherit;opacity:.65}
+.vw-ph{position:relative;flex:1;min-height:0;margin:0 clamp(0px,3vw,32px)}
+.vw-ph :is(img,canvas){position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .6s ease}
+.vw-ph :is(img,canvas).l{opacity:0}
+#vw.light .vw-ph :is(img,canvas).l.ok{opacity:1}
+.vw-soon{display:none;position:absolute;left:50%;top:16px;transform:translateX(-50%);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);background:rgba(12,11,10,.7);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:7px 13px;white-space:nowrap}
+#vw.light.nol .vw-soon{display:block}
+.vw-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(12,11,10,.55);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--ink);font:400 30px/1 var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;padding-bottom:4px}
+.vw-arrow:hover{background:rgba(200,50,31,.85)}
+.vw-arrow:disabled{opacity:.25;cursor:default;background:rgba(12,11,10,.55)}
+.vw-arrow.prev{left:clamp(6px,1.6vw,20px)} .vw-arrow.next{right:clamp(6px,1.6vw,20px)}
+.vw-cap{flex:none;padding:12px clamp(14px,3vw,32px) calc(14px + env(safe-area-inset-bottom,0px));text-align:center;font-size:14px;line-height:1.5;color:#d9d2c6}
+.vw-cap small{display:block;margin-top:4px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(243,239,232,.45)}
+#vw button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media (max-width:640px){
+  .vw-t{font-size:10px;letter-spacing:.14em;gap:8px}
+  .vw-t span{display:none}
+  .vw-mode button{padding:8px 11px}
+  .vw-x kbd{display:none}
+  .vw-arrow{width:42px;height:42px;font-size:24px}
+  .vw-cap{font-size:13px}
+}
+@media (hover:none){ .vw-x kbd{display:none} }
+@media (orientation:landscape) and (max-height:500px){
+  .vw-top{padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:6px}
+  .vw-cap{display:none}
+}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage"></div></div>
+<div id="bar"></div>
+<div id="nav">
+  <button id="bPrev" title="Previous (←)">‹ Prev</button>
+  <button id="bGrid" title="All views (G)">All views</button>
+  <button id="bFull" title="Fullscreen (F)">Fullscreen</button>
+  <button id="bNext" title="Next (→)">Next ›</button>
+</div>
+<div id="grid"></div>
+<div class="hint" id="hint">← → to navigate · G all views · F fullscreen</div>
+<div id="vw" role="dialog" aria-modal="true" aria-label="Render viewer" aria-hidden="true">
+  <div class="vw-top">
+    <div class="vw-t"><b id="vwNo"></b><span id="vwName"></span></div>
+    <div class="vw-mode" role="group" aria-label="Render lighting">
+      <button type="button" data-m="dark" aria-pressed="true" title="Dark render (D)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5a6 6 0 1 0 7.7 7.7z" fill="currentColor"/></svg>Dark</button>
+      <button type="button" data-m="light" aria-pressed="false" title="Light render (L)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3 3l1.1 1.1M11.9 11.9 13 13M13 3l-1.1 1.1M4.1 11.9 3 13"/></g></svg>Light</button>
+    </div>
+    <button type="button" class="vw-x" id="vwClose" title="Back to slides (Esc)">✕ Close <kbd>Esc</kbd></button>
+  </div>
+  <div class="vw-ph">
+    <canvas class="d" role="img"></canvas><canvas class="l" aria-hidden="true"></canvas>
+    <div class="vw-soon">Light render coming soon</div>
+    <button type="button" class="vw-arrow prev" title="Previous view (←)" aria-label="Previous view">‹</button>
+    <button type="button" class="vw-arrow next" title="Next view (→)" aria-label="Next view">›</button>
+  </div>
+  <div class="vw-cap" id="vwCap"></div>
+</div>
+
+<script>
+// ---------- scrambled renders ----------
+// The render files are published as shuffled tiles (renders_s/, renders_light_s/). They are put back in
+// order here and drawn on <canvas>, so a copied file address or a download from the repo is a jumbled picture.
+const SCR = {C:11, R:9, K:0x2f6b1d37, LRU:4};
+function scrPerm(name){
+  let h=0x811c9dc5; for (let i=0;i<name.length;i++){ h^=name.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; }
+  let a=(h^SCR.K)>>>0; const n=SCR.C*SCR.R, p=[...Array(n).keys()];
+  const rnd=()=>{ a=(a+0x6D2B79F5)>>>0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+  for (let i=n-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [p[i],p[j]]=[p[j],p[i]]; }
+  return p;
+}
+const scrCache = new Map();   // url -> Promise<full-size unscrambled canvas> (small LRU)
+function scrFull(url){
+  if (scrCache.has(url)){ const pr=scrCache.get(url); scrCache.delete(url); scrCache.set(url,pr); return pr; }
+  const pr = new Promise((res,rej)=>{
+    const im = new Image(); im.decoding = "async";
+    im.onload = ()=>{
+      const W=im.naturalWidth, H=im.naturalHeight, tw=Math.floor(W/SCR.C/8)*8, th=Math.floor(H/SCR.R/8)*8, p=scrPerm(url);
+      const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+      x.drawImage(im,0,0);
+      for (let i=0;i<p.length;i++) x.drawImage(im,(i%SCR.C)*tw,Math.floor(i/SCR.C)*th,tw,th,(p[i]%SCR.C)*tw,Math.floor(p[i]/SCR.C)*th,tw,th);
+      im.removeAttribute("src"); res(c);
+    };
+    im.onerror = ()=>rej(new Error("missing " + url));
+    im.src = url;
+  });
+  scrCache.set(url,pr); pr.catch(()=>scrCache.delete(url));
+  while (scrCache.size > SCR.LRU) scrCache.delete(scrCache.keys().next().value);
+  return pr;
+}
+// draw url onto canvas cv, sized for where it is shown (opts.w forces a width)
+function scrPaint(cv, url, opts={}){
+  cv._want = url;
+  return scrFull(url).then(full=>{
+    if (cv._want !== url) return false;
+    const A=full.width/full.height, dpr=Math.min(window.devicePixelRatio||1, 2.5), bw=cv.clientWidth, bh=cv.clientHeight;
+    const need = opts.w || ((bw>8 && bh>8) ? Math.max(bw, bh*A)*dpr*1.2 : full.width);
+    const w=Math.min(full.width, Math.max(64, Math.round(need))), h=Math.round(w/A);
+    if (cv.width!==w || cv.height!==h){ cv.width=w; cv.height=h; }
+    const x=cv.getContext("2d"); x.imageSmoothingEnabled=true; x.imageSmoothingQuality="high"; x.drawImage(full,0,0,w,h);
+    cv._painted = url; return true;
+  }, err=>{ if (cv._want !== url) return false; cv._want = null; throw err; });
+}
+function scrRelease(cv){ cv._want = null; cv._painted = null; cv.width = 1; cv.height = 1; }
+
+const VIEWS = [{"n": 1, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_00", "cam": [432, 566], "ang": -1.5708, "cap": "Looking in from the front court, a dining bay set between planters, framed by the arched timber jaali."}, {"n": 2, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_01", "cam": [753, 563], "ang": 3.1416, "cap": "Along the front colonnade, the planter-lined dining bays to the right and the cobbled walk ahead."}, {"n": 3, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_02", "cam": [497, 569], "ang": -0.5734, "cap": "Diagonal view across the bays, through the arches to the red stair beyond."}, {"n": 4, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent__View_00", "cam": [393, 347], "ang": 0.0, "cap": "From the kitchen end, down the length of the dining hall toward the red banquette."}, {"n": 5, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent__View_01", "cam": [654, 308], "ang": 0.3903, "cap": "The banquette corner, with arched jaali openings to the outdoor bays."}, {"n": 6, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent_Looking_At_Spiral_Staircase_View_07", "cam": [722, 372], "ang": -1.3353, "cap": "Looking up at the sculpted red spiral stair to the first floor."}, {"n": 7, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_00", "cam": [445, 137], "ang": 1.9234, "cap": "From the rear verandah into a bench bay, the arch opening back into the hall."}, {"n": 8, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_01", "cam": [720, 131], "ang": -3.1023, "cap": "Rear verandah tables against the timber louvre screen."}, {"n": 9, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_03", "cam": [523, 131], "ang": 0.0, "cap": "Down the louvred verandah toward the garden arch and the courtyard beyond."}, {"n": 10, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_04", "cam": [846, 569], "ang": -1.5708, "cap": "Entering the landscape court from the front, past the dining benches."}, {"n": 11, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_00", "cam": [882, 209], "ang": 1.7819, "cap": "Serpentine planter-benches running along the building's flank."}, {"n": 12, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_02", "cam": [1044, 335], "ang": -2.9617, "cap": "Looking back from the campfire court toward the restaurant."}, {"n": 13, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_03", "cam": [965, 335], "ang": -0.0348, "cap": "Into the campfire court, a curved red-based bench wrapping the gathering space."}, {"n": 14, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_05", "cam": [661, 281], "ang": 3.1416, "cap": "Upper dining room, looking west through the glazed partition to the party hall."}, {"n": 15, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_06", "cam": [419, 314], "ang": -0.1007, "cap": "Toward the east gable wall with its arched jaali windows."}, {"n": 16, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_04", "cam": [772, 510], "ang": 3.1416, "cap": "The south dining room under the timber-slat ceiling, with the open timber frame to the left."}, {"n": 17, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_00", "cam": [353, 216], "ang": 2.0803, "cap": "From the back of the hall over the seating toward the louvred front."}, {"n": 18, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_01", "cam": [327, 497], "ang": -2.125, "cap": "From the front, back over the seating to the arched jaali windows."}, {"n": 19, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_02", "cam": [150, 419], "ang": -0.5796, "cap": "Across the seating toward the glazed partition into the restaurant."}];
+const VB = "48 52 1078 568";
+const FL = {GF:{name:"Ground Floor", base:"keyplan/Ground_Floor_Keyplan_Base.svg"},
+            FF:{name:"First Floor",  base:"keyplan/First_Floor_Keyplan_Base.svg"}};
+const PROJECT = "Proposed Restaurant @ Narayanamangalam, Kerala";
+const NS = "http://www.w3.org/2000/svg";
+const [vx,vy,vw,vh] = VB.split(" ").map(Number);
+const pad = n => String(n).padStart(2,"0");
+const total = VIEWS.length;
+
+function marker(v, o={}){
+  const r=o.r||13, L=o.L||85, fs=o.fs||13, sw=o.sw||1.8, h=0.56, [cx,cy]=v.cam, a=v.ang;
+  const p=(ang,len)=>[(cx+len*Math.cos(ang)).toFixed(1),(cy+len*Math.sin(ang)).toFixed(1)];
+  const [x1,y1]=p(a-h,L), [x2,y2]=p(a+h,L), [ax,ay]=p(a,r+L*0.32);
+  return `<g class="vm" data-v="${v.n}">
+    <path d="M${cx} ${cy}L${x1} ${y1}A${L} ${L} 0 0 1 ${x2} ${y2}Z" fill="#c8321f" fill-opacity=".26" stroke="#c8321f" stroke-width="${sw}"/>
+    <line x1="${cx}" y1="${cy}" x2="${ax}" y2="${ay}" stroke="#c8321f" stroke-width="${sw*1.6}" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#c8321f" stroke="#fff" stroke-width="${sw*1.3}"/>
+    <text x="${cx}" y="${cy+fs*0.36}" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="${fs}" font-weight="700" fill="#fff">${pad(v.n)}</text></g>`;
+}
+function ghost(v){ return `<circle cx="${v.cam[0]}" cy="${v.cam[1]}" r="10" fill="#8a837b" fill-opacity=".6"/>`; }
+function north(x,y,s=1){ // sheet north arrow points down
+  return `<g transform="translate(${x} ${y}) scale(${s})"><circle r="20" fill="#fff" stroke="#1d1b18" stroke-width="2"/>
+  <path d="M0 -12 L0 12 M-7 4 L0 14 L7 4" fill="none" stroke="#1d1b18" stroke-width="2.4" stroke-linejoin="round"/>
+  <text y="-26" text-anchor="middle" font-family="Arial" font-size="15" font-weight="700" fill="#1d1b18">N</text></g>`;
+}
+function planSVG(floor, inner){
+  return `<svg viewBox="${VB}" xmlns="${NS}" role="img" aria-label="${FL[floor].name} key plan">
+    <image href="${FL[floor].base}" x="${vx}" y="${vy}" width="${vw}" height="${vh}"/>${inner}
+    ${north(vx+vw-46, vy+vh-60, 1.25)}</svg>`;
+}
+
+// ---------- build slides ----------
+const slides = [];
+function add(html, cls, img){ slides.push({html, cls, img}); }
+
+add(`<canvas class="bg" data-src="renders_s/Ground_Floor_Restaurent__View_00.jpg" aria-hidden="true"></canvas>
+  <div class="shade"></div>
+  <div class="in">
+    <div class="kick"><i></i>Render Views · Batch 00</div>
+    <h1>Proposed Restaurant</h1>
+    <div class="sub">Narayanamangalam, Kerala</div>
+    <div class="meta">
+      <div><b>${total}</b>Rendered views</div>
+      <div><b>${VIEWS.filter(v=>v.floor=="GF").length}</b>Ground floor</div>
+      <div><b>${VIEWS.filter(v=>v.floor=="FF").length}</b>First floor</div>
+    </div>
+  </div>`, "cover");
+
+const slideOfView = {};
+for (const fl of ["GF","FF"]){
+  const vs = VIEWS.filter(v=>v.floor==fl);
+  const shown = vs.filter(v=>true);
+  const areas = [...new Set(vs.map(v=>v.area))];
+  add(`<div class="side">
+      <div class="kick">Key plan · view positions</div>
+      <h2>${FL[fl].name}</h2>
+      <div class="d">${areas.join(" · ")}</div>
+      <ol>${vs.map(v=>`<li data-go="${v.n}"><em>${pad(v.n)}</em>${v.area}<small>${v.file.match(/(\d+)$/)[1] ? "View "+v.file.match(/(\d+)$/)[1] : ""}</small></li>`).join("")}</ol>
+    </div>
+    <div class="plan">${planSVG(fl, `<g class="mk-d">${shown.map(v=>marker(v)).join("")}</g><g class="mk-m">${shown.map(v=>marker(v,{r:28,L:120,fs:26,sw:3})).join("")}</g>`)}
+    <div class="note"><span>Red dot = camera position · wedge = view direction &amp; field of view</span><span>${fl=="GF"?"Click a marker or a view to open it":"Click a marker or a view to open it"}</span></div></div>`, "idx");
+  for (const v of vs){
+    slideOfView[v.n] = slides.length;
+    const others = vs.filter(o=>o.n!==v.n).map(ghost).join("");
+    add(`<canvas class="bg" data-src="renders_s/${v.file}.jpg" role="img" aria-label="${v.area}, view ${v.n}"></canvas>
+      <div class="shade top"></div><div class="shade"></div>
+      <div class="hdr"><span>${PROJECT}</span><span><b>${pad(v.n)}</b> / ${pad(total)}</span></div>
+      <div class="cap">
+        <div class="no"><i></i>${FL[fl].name} · View ${pad(v.n)}</div>
+        <h2>${v.area}</h2>
+        <p>${v.cap}</p>
+      </div>
+      <div class="kp">
+        <div class="t"><span>Key plan</span><span>${FL[fl].name}</span></div>
+        ${planSVG(fl, others + marker(v,{r:24,L:175,fs:22,sw:3.4}))}
+        <div class="f"><span class="lg"><svg viewBox="0 0 22 16"><path d="M2 8 L20 1 A18 18 0 0 1 20 15 Z" fill="#c8321f" fill-opacity=".3" stroke="#c8321f"/><circle cx="3" cy="8" r="3" fill="#c8321f"/></svg>Camera &amp; view direction</span><span>${v.file.replace(/_/g," ")}</span></div>
+      </div>`, "view", v.file);
+  }
+}
+
+const stage = document.getElementById("stage");
+slides.forEach((s,i)=>{ const d=document.createElement("section"); d.className="slide "+s.cls; d.innerHTML=s.html; d.dataset.i=i; stage.appendChild(d); s.el=d; });
+
+// ---------- navigation ----------
+let cur = 0;
+function load(i){ const s=slides[i]; if(!s) return; s.el.querySelectorAll("canvas[data-src]").forEach(cv=>{ const u=cv.dataset.src; if(cv._painted!==u && cv._want!==u) scrPaint(cv,u).catch(()=>{}); }); }
+function go(i){
+  i = Math.max(0, Math.min(slides.length-1, i));
+  slides[cur].el.classList.remove("on"); cur=i; slides[cur].el.classList.add("on"); slides[cur].el.scrollTop=0;
+  [i,i+1,i+2,i-1].forEach(load);
+  slides.forEach((s,j)=>{ if (Math.abs(j-cur)>3) s.el.querySelectorAll("canvas[data-src]").forEach(cv=>{ if(cv._painted||cv._want) scrRelease(cv); }); });
+  document.getElementById("bar").style.width = (100*(cur)/(slides.length-1))+"%";
+  try{ history.replaceState(null,"","#"+cur); }catch(e){}
+}
+const FLUID_BELOW = 0.55;   // below this stage scale the slides reflow instead of shrinking
+function fit(){
+  const s=Math.min(innerWidth/1920, innerHeight/1080), fluid = s < FLUID_BELOW;
+  stage.classList.toggle("fluid", fluid); document.body.classList.toggle("fluid", fluid);
+  stage.style.transform = fluid ? "none" : `translate(-50%,-50%) scale(${s})`;
+}
+addEventListener("resize", fit); fit();
+
+addEventListener("keydown", e=>{
+  if (document.getElementById("grid").classList.contains("on")){ if(e.key=="Escape"||e.key=="g"||e.key=="G") toggleGrid(); return; }
+  if (["ArrowRight","PageDown"," ","Enter"].includes(e.key)) { e.preventDefault(); go(cur+1); }
+  else if (["ArrowLeft","PageUp","Backspace"].includes(e.key)) { e.preventDefault(); go(cur-1); }
+  else if (e.key=="Home") go(0); else if (e.key=="End") go(slides.length-1);
+  else if (e.key=="g"||e.key=="G") toggleGrid();
+  else if (e.key=="f"||e.key=="F") fullscreen();
+});
+stage.addEventListener("click", e=>{
+  const t = e.target.closest("[data-go],.vm");
+  if (t){ const n = +(t.dataset.go || t.dataset.v); go(slideOfView[n]); return; }
+  // in the reflowed layout only a tap on the picture pages, so taps while reading/scrolling don't jump slides
+  if (stage.classList.contains("fluid") && !e.target.closest(".bg")) return;
+  if (!slides[cur].el.classList.contains("idx")) go(cur + (e.clientX > innerWidth/2 ? 1 : -1));
+});
+let tx=null, ty=null; addEventListener("touchstart",e=>{ tx=e.touches[0].clientX; ty=e.touches[0].clientY; },{passive:true});
+addEventListener("touchend",e=>{ if(tx==null) return; const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty; tx=null;
+  if (grid.classList.contains("on")) return;
+  if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5) go(cur+(dx<0?1:-1)); });
+document.getElementById("bPrev").onclick=e=>{e.stopPropagation();go(cur-1)};
+document.getElementById("bNext").onclick=e=>{e.stopPropagation();go(cur+1)};
+document.getElementById("bGrid").onclick=e=>{e.stopPropagation();toggleGrid()};
+document.getElementById("bFull").onclick=e=>{e.stopPropagation();fullscreen()};
+function fullscreen(){ try{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }catch(e){} }
+
+const grid = document.getElementById("grid");
+grid.innerHTML = `<button class="gclose" type="button">Close ✕</button>` + ["GF","FF"].map(fl=>`<h3>${FL[fl].name}</h3><div class="g">${VIEWS.filter(v=>v.floor==fl).map(v=>
+  `<figure data-go="${v.n}"><canvas data-src="renders_s/${v.file}.jpg" aria-hidden="true"></canvas><figcaption><b>${pad(v.n)}</b>${v.area}</figcaption></figure>`).join("")}</div>`).join("");
+grid.addEventListener("click", e=>{ const f=e.target.closest("[data-go]"); if(f){ toggleGrid(); go(slideOfView[+f.dataset.go]); } else toggleGrid(); });
+function toggleGrid(){ grid.classList.toggle("on");
+  if (grid.classList.contains("on")) grid.querySelectorAll("canvas[data-src]").forEach(cv=>{ if(!cv._painted && !cv._want) scrPaint(cv,cv.dataset.src).catch(()=>{}); }); }
+
+if (matchMedia("(hover:none)").matches) document.getElementById("hint").textContent = "Swipe or tap the picture to navigate";
+// ---------- render viewer (click / tap a picture: dark ⇄ light, Esc to return) ----------
+const vwEl = document.getElementById("vw"), vwD = vwEl.querySelector("canvas.d"), vwL = vwEl.querySelector("canvas.l");
+const vwNo = document.getElementById("vwNo"), vwName = document.getElementById("vwName"), vwCap = document.getElementById("vwCap");
+const vwPrev = vwEl.querySelector(".vw-arrow.prev"), vwNext = vwEl.querySelector(".vw-arrow.next");
+const vwModeBtns = [...vwEl.querySelectorAll(".vw-mode button")];
+const viewOfSlide = i => { const f = slides[i] && slides[i].img; return f ? VIEWS.find(v=>v.file===f) : null; };
+const lightOK = {};
+let vwMode = "dark"; try{ if (localStorage.getItem("renderMode")==="light") vwMode = "light"; }catch(e){}
+const TOUCH = matchMedia("(hover:none)").matches;
+function vwStepTarget(d){ let i = cur + d; while (i>=0 && i<slides.length && !viewOfSlide(i)) i += d; return (i>=0 && i<slides.length) ? i : -1; }
+function vwShow(v){
+  vwNo.textContent = `View ${pad(v.n)} / ${pad(total)}`;
+  vwName.textContent = `${FL[v.floor].name} · ${v.area}`;
+  vwCap.innerHTML = `${v.cap}<small>${TOUCH ? "Swipe for next view · swipe down to close" : "← → next view · D / L dark or light · Esc back to slides"}</small>`;
+  vwD.setAttribute("aria-label", `${v.area}, view ${v.n}`);
+  scrPaint(vwD, `renders_s/${v.file}.jpg`, {w:4000}).catch(()=>{});
+  vwL.classList.remove("ok"); vwEl.classList.remove("nol");
+  if (lightOK[v.file] === false){ scrRelease(vwL); vwEl.classList.add("nol"); }
+  else scrPaint(vwL, `renders_light_s/${v.file}.jpg`, {w:4000})
+         .then(ok=>{ if (ok){ lightOK[v.file] = true; vwL.classList.add("ok"); } })
+         .catch(()=>{ lightOK[v.file] = false; scrRelease(vwL); vwEl.classList.add("nol"); });
+  vwPrev.disabled = vwStepTarget(-1) < 0; vwNext.disabled = vwStepTarget(1) < 0;
+}
+function vwSetMode(m){
+  vwMode = m; vwEl.classList.toggle("light", m==="light");
+  vwModeBtns.forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.m===m)));
+  try{ localStorage.setItem("renderMode", m); }catch(e){}
+}
+function vwOpen(){
+  const v = viewOfSlide(cur); if (!v) return;
+  if (grid.classList.contains("on")) toggleGrid();
+  vwShow(v); vwSetMode(vwMode);
+  vwEl.classList.add("on"); vwEl.setAttribute("aria-hidden","false");
+  try{ document.getElementById("vwClose").focus({preventScroll:true}); }catch(e){}
+}
+function vwClose(){ scrRelease(vwD); scrRelease(vwL); vwEl.classList.remove("on"); vwEl.setAttribute("aria-hidden","true"); try{ document.activeElement.blur(); }catch(e){} }
+function vwStep(d){ const i = vwStepTarget(d); if (i<0) return; go(i); vwShow(viewOfSlide(i)); }
+
+// add a small "Dark / Light" button on every view slide, and open the viewer from the picture
+slides.forEach(s=>{ if (!s.img) return;
+  const b = document.createElement("button"); b.type = "button"; b.className = "vbtn"; b.title = "View this render in dark / light (V)";
+  b.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg>Dark / Light`;
+  s.el.appendChild(b);
+});
+stage.addEventListener("click", e=>{
+  if (!e.target.closest(".view .bg, .view .shade, .vbtn")) return;
+  e.stopPropagation(); vwOpen();
+}, true);
+
+vwModeBtns.forEach(b=>b.addEventListener("click", ()=>vwSetMode(b.dataset.m)));
+document.getElementById("vwClose").addEventListener("click", vwClose);
+vwPrev.addEventListener("click", ()=>vwStep(-1));
+vwNext.addEventListener("click", ()=>vwStep(1));
+
+document.addEventListener("keydown", e=>{
+  if (!vwEl.classList.contains("on")){
+    if ((e.key==="v"||e.key==="V") && viewOfSlide(cur) && !grid.classList.contains("on")){ e.preventDefault(); e.stopPropagation(); vwOpen(); }
+    return;
+  }
+  const k = e.key; let used = true;
+  if (k==="Escape") vwClose();
+  else if (["ArrowRight","PageDown"," "].includes(k)) vwStep(1);
+  else if (["ArrowLeft","PageUp"].includes(k)) vwStep(-1);
+  else if (k==="l"||k==="L") vwSetMode("light");
+  else if (k==="d"||k==="D") vwSetMode("dark");
+  else if (k==="t"||k==="T"||k==="Enter") vwSetMode(vwMode==="light" ? "dark" : "light");
+  else if (k==="f"||k==="F") fullscreen();
+  else used = false;
+  if (used) e.preventDefault();
+  e.stopPropagation();                         // slider shortcuts are paused while the viewer is open
+}, true);
+
+// touch: swipe left / right for the next view, swipe down to close (does not reach the slider's own swipe)
+let vx0=null, vy0=null;
+vwEl.addEventListener("touchstart", e=>{ e.stopPropagation(); if (e.touches.length!==1){ vx0=null; return; } vx0=e.touches[0].clientX; vy0=e.touches[0].clientY; }, {passive:true});
+vwEl.addEventListener("touchend", e=>{ e.stopPropagation(); if (vx0==null) return;
+  const dx=e.changedTouches[0].clientX-vx0, dy=e.changedTouches[0].clientY-vy0; vx0=null;
+  if (Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5) vwStep(dx<0?1:-1);
+  else if (dy>90 && Math.abs(dy)>Math.abs(dx)*1.5) vwClose();
+});
+document.getElementById("hint").textContent = TOUCH ? "Swipe to navigate · tap a picture for dark / light"
+                                                     : "← → navigate · click a picture for dark / light · G all views · F fullscreen";
+
+setTimeout(()=>document.getElementById("hint").style.opacity=0, 4500);
+const start = parseInt((location.hash||"#0").slice(1)) || 0;
+slides[0].el.classList.add("on"); go(start);
+</script>
+<script>
+// ---------- image protection (deterrent: right-click, drag, save / view-source shortcuts) ----------
+(function(){
+  const stop = e => { e.preventDefault(); e.stopPropagation(); return false; };
+  document.addEventListener("contextmenu", stop, true);                       // right-click / long-press menu
+  document.addEventListener("dragstart", e => { if (e.target.closest && e.target.closest("img,svg,a")) stop(e); }, true);
+  document.addEventListener("selectstart", stop, true);
+  document.addEventListener("keydown", e => {
+    const k = (e.key || "").toLowerCase(), mod = e.ctrlKey || e.metaKey;
+    if ((mod && ["s","u","p"].includes(k)) ||                                // save page, view source, print
+        (mod && e.shiftKey && ["i","j","c"].includes(k)) ||                  // dev tools
+        k === "f12") stop(e);
+  }, true);
+  const lockImgs = root => root.querySelectorAll("img").forEach(im => { im.draggable = false; im.setAttribute("oncontextmenu","return false"); });
+  lockImgs(document);
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.querySelectorAll && lockImgs(n.parentNode || n)))).observe(document.body, {childList:true, subtree:true});
+})();
+</script>
+</body>
+</html>

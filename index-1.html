@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restaurant Render Views</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#f3efe8; --muted:#b2aa9e; --paper:#f6f2ea; --char:#151311; --char2:#1c1916;
+  --red:#c8321f; --line:rgba(243,239,232,.16);
+  --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --sans:Manrope,"Segoe UI",Arial,sans-serif;
+  --gut:clamp(16px,4vw,64px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-snap-type:y mandatory}
+html.gliding{scroll-snap-type:none}
+.pg{height:100vh;height:100svh;scroll-snap-align:start;scroll-snap-stop:always;position:relative;overflow:hidden}
+body{background:var(--char);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+:is(img,canvas){display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+
+/* top bar */
+#top{position:fixed;inset:0 0 auto 0;height:60px;z-index:20;display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--gut);font-size:12px;letter-spacing:.2em;text-transform:uppercase;transition:background .35s,border-color .35s;border-bottom:1px solid transparent}
+#top.solid{background:rgba(21,19,17,.92);backdrop-filter:blur(10px);border-color:var(--line)}
+#top .brand{color:rgba(243,239,232,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:20px}
+#top nav{display:flex;gap:clamp(12px,2.4vw,34px);white-space:nowrap}
+#top nav a{color:var(--muted);transition:color .2s}
+#top nav a:hover,#top nav a.on{color:var(--ink)}
+#top .right{display:flex;align-items:center;gap:clamp(14px,2.4vw,34px)}
+.mode{display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px;background:rgba(12,11,10,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.mode button{appearance:none;border:0;background:transparent;color:var(--muted);font:700 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:7px 13px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .25s,color .25s}
+.mode button svg{width:13px;height:13px;flex:none}
+.mode button:hover{color:var(--ink)}
+.mode button[aria-pressed="true"]{background:var(--ink);color:var(--char)}
+.mode button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.view .ph :is(img,canvas).l,.view .ph :is(img,canvas).l.ld{position:absolute;inset:0;opacity:0;transition:opacity .8s}
+html.lightmode .view.has-l .ph :is(img,canvas).l.ld{opacity:1}
+.hero :is(img,canvas).l{opacity:0;transition:opacity .8s}
+html.lightmode .hero.has-l :is(img,canvas).l{opacity:1}
+.soon{display:none;position:absolute;z-index:4;left:var(--gut);top:calc(76px + env(safe-area-inset-top,0px));font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);background:rgba(12,11,10,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:7px 13px}
+html.lightmode .view:not(.has-l) .soon{display:block}
+@media (max-width:600px){.mode button span{display:none}.mode button{padding:7px 9px}#top nav{gap:12px;font-size:10px}}
+#prog{position:fixed;left:0;top:0;height:2px;background:var(--red);z-index:21;width:0}
+
+/* hero */
+.hero{overflow:hidden}
+.hero :is(img,canvas){position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform}
+.view .cap,.view .kp,.floor .side,.floor .plan,.hero .in{transition:transform 1.1s cubic-bezier(.22,.7,.2,1);transform:translateY(0)}
+.pg.away .cap,.pg.away .kp,.pg.away .side,.pg.away .plan,.pg.away .in{transform:translateY(46px)}
+.pg.away .kp{transition-delay:0s}.pg .kp{transition-delay:.08s}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,11,10,.92) 0%,rgba(12,11,10,.7) 40%,rgba(12,11,10,.1) 78%)}
+.hero .in{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 var(--gut);max-width:980px}
+.kick{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:16px}
+.kick i{width:48px;height:2px;background:var(--red);flex:none}
+.hero h1{font-family:var(--serif);font-weight:600;font-size:clamp(56px,9vw,132px);line-height:.95;margin:28px 0 20px}
+.hero .sub{font-family:var(--serif);font-size:clamp(24px,2.8vw,40px);color:#e7e0d4}
+.hero .meta{margin-top:clamp(36px,6vh,64px);display:flex;gap:clamp(24px,4vw,56px);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.hero .meta b{display:block;font-family:var(--serif);font-size:clamp(36px,4vw,54px);letter-spacing:0;color:var(--ink);font-weight:600;line-height:1.1;text-transform:none}
+.scroll{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:1;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:10px}
+.scroll span{width:1px;height:42px;background:linear-gradient(var(--muted),transparent);animation:drip 2s ease-in-out infinite}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* floor intro */
+.floor{padding:calc(60px + clamp(16px,4vh,48px)) var(--gut) clamp(16px,4vh,48px);display:grid;grid-template-columns:minmax(260px,380px) minmax(0,1fr);gap:clamp(24px,3.5vw,56px);align-items:center;background:var(--char)}
+.floor .side{display:flex;flex-direction:column;max-height:100%;min-height:0}
+.floor h2{font-size:clamp(40px,min(4.6vw,8vh),80px) !important;margin:10px 0 8px !important}
+.floor .d{font-size:15px !important;margin-bottom:16px !important}
+.floor h2{font-family:var(--serif);font-weight:600;font-size:clamp(56px,6.5vw,96px);line-height:1;margin:16px 0 12px}
+.floor .d{color:#cfc7bb;font-size:17px;margin-bottom:26px}
+.floor ol{list-style:none;overflow:auto;min-height:0}
+.floor li a{display:flex;gap:14px;align-items:baseline;padding:clamp(3px,.55vh,8px) 0;border-top:1px solid var(--line);font-size:clamp(13px,1.55vh,16px);color:#e7e0d4;transition:color .2s,padding .2s}
+.floor li a:hover{color:#fff;padding-left:6px}
+.floor li em{font-style:normal;font-weight:700;color:var(--red);width:28px;flex:none;font-size:14px}
+.floor li small{color:var(--muted);font-size:13px;margin-left:auto;white-space:nowrap}
+.plan{background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.14);border-radius:4px;padding:clamp(8px,1.2vw,18px);box-shadow:0 18px 50px rgba(0,0,0,.35);max-height:100%;display:flex;flex-direction:column;min-height:0}
+.plan svg{min-height:0;max-height:calc(100svh - 190px)}
+.plan svg{display:block;width:100%;height:auto}
+.plan .vm{cursor:pointer}
+.plan .vm:hover path{fill-opacity:.5}
+.plan .note{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
+
+/* area heading */
+.area{padding:clamp(56px,9vh,96px) var(--gut) 22px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+.area h3{font-family:var(--serif);font-weight:600;font-size:clamp(34px,3.6vw,52px);line-height:1.05}
+.area span{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+
+/* view block */
+.view{background:#100f0d}
+.view .ph{position:absolute;inset:0;background:#201d1a;overflow:hidden;cursor:zoom-in}
+.view .ph :is(img,canvas){width:100%;height:100%;object-fit:cover;will-change:transform;transition:opacity .8s;opacity:0;transform:scale(1.18)}
+.view .ph :is(img,canvas).ld{opacity:1}
+
+.view .ph::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(12,11,10,0) 52%,rgba(12,11,10,.5) 76%,rgba(12,11,10,.86) 100%)}
+.cap{position:absolute;left:var(--gut);bottom:clamp(24px,4vw,56px);z-index:2;width:min(60%,1100px);pointer-events:none}
+/* keep the caption clear of the key-plan card on mid-size screens */
+.cap{width:min(60%,1100px,calc(100% - clamp(300px,29vw,560px) - var(--gut) - clamp(16px,3vw,52px) - 40px))}
+.cap .no{font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);display:flex;gap:14px;align-items:center}
+.cap .no i{width:40px;height:2px;background:var(--red)}
+.cap h4{font-family:var(--serif);font-weight:600;font-size:clamp(34px,4.4vw,72px);line-height:1.02;margin:10px 0 10px}
+.cap p{font-size:clamp(15px,1.25vw,21px);color:#e2dbd0;max-width:900px}
+.kp{position:absolute;right:clamp(16px,3vw,52px);bottom:clamp(16px,3vw,48px);z-index:3;width:clamp(300px,29vw,560px);background:rgba(10,9,8,.58);-webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);color:var(--ink);border:1px solid rgba(255,255,255,.14);border-radius:4px;box-shadow:0 18px 50px rgba(0,0,0,.35);padding:clamp(10px,1vw,16px)}
+.kp .t{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.kp .t span:last-child{color:var(--muted);font-weight:500}
+.kp svg{display:block;width:100%;height:auto;background:transparent}
+.kp .f{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:8px;font-size:11px;color:var(--muted);letter-spacing:.04em}
+.kp .f .lg{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.kp .f .lg svg{width:20px;height:14px;background:none}
+.kp .f .fn{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .9s ease,transform .9s ease}
+.rv.in{opacity:1;transform:none}
+
+/* index grid + footer */
+.index{padding:calc(60px + clamp(16px,4vh,40px)) var(--gut) 0;display:flex;flex-direction:column;overflow-y:auto}
+.index .gwrap{flex:1}
+.index h2{font-family:var(--serif);font-weight:600;font-size:clamp(44px,5vw,72px);margin:14px 0 34px}
+.index h5{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:26px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.grid a :is(img,canvas){aspect-ratio:16/9;object-fit:cover;width:100%;border-radius:3px;outline:2px solid transparent;transition:outline-color .2s}
+.grid a:hover :is(img,canvas){outline-color:var(--red)}
+.grid a div{font-size:13px;color:#d9d2c6;margin-top:7px}
+.grid a b{color:var(--red);margin-right:8px}
+footer{padding:28px 0 32px;margin-top:40px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line)}
+
+/* lightbox */
+#lb{position:fixed;inset:0;z-index:50;background:rgba(8,7,6,.96);display:none;align-items:center;justify-content:center;cursor:zoom-out}
+#lb.on{display:flex}
+#lb :is(img,canvas){max-width:96vw;max-height:92vh;object-fit:contain}
+#lb .x{position:absolute;top:18px;right:24px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+@media (max-width:900px){
+  .floor{grid-template-columns:1fr}
+  .plan{position:relative;top:0}
+  .view{display:flex;flex-direction:column;overflow-y:auto}
+  .view .ph{position:relative;inset:auto;height:auto;aspect-ratio:16/10;flex:none}
+  .floor{align-content:start;overflow-y:auto}
+  .plan svg{max-height:none}
+  .cap{position:relative;left:auto;bottom:auto;width:auto;padding:18px var(--gut) 0}
+  .view .ph::after{display:none}
+  .kp{position:relative;right:auto;bottom:auto;width:auto;margin:16px var(--gut) 0;box-shadow:none}
+  #top .brand{display:none}
+}
+
+/* ---------- responsive layer: tablets, phones (portrait + landscape) ---------- */
+.mk-m{display:none}
+#top nav .sh{display:none}
+@media (max-width:900px){
+  /* natural scrolling instead of full-screen snapping */
+  html{scroll-snap-type:none}
+  .pg{height:auto;min-height:0;overflow:visible;scroll-snap-align:none}
+  .kick{font-size:11px;letter-spacing:.24em;gap:12px}
+  .kick i{width:32px}
+
+  /* hero */
+  .hero{min-height:100vh;min-height:100svh;overflow:hidden}
+  .hero .in{min-height:100vh;min-height:100svh;justify-content:flex-end;padding:calc(80px + env(safe-area-inset-top,0px)) var(--gut) 124px}
+  .hero::after{background:linear-gradient(180deg,rgba(12,11,10,.3) 0%,rgba(12,11,10,.5) 38%,rgba(12,11,10,.93) 100%)}
+  .hero h1{font-size:clamp(44px,12vw,96px);margin:18px 0 12px}
+  .hero .sub{font-size:clamp(20px,5.4vw,32px)}
+  .hero .meta{margin-top:28px;gap:clamp(18px,6vw,40px);font-size:10px;letter-spacing:.14em}
+  .hero .meta b{font-size:clamp(30px,8vw,44px)}
+
+  /* floor intro */
+  .floor{padding:calc(60px + 28px) var(--gut) 44px;gap:24px;overflow:visible}
+  .floor .side{max-height:none}
+  .floor ol{overflow:visible}
+  .floor li a{padding:11px 0;font-size:15px}
+  .plan{max-height:none}
+  .mk-d{display:none}.mk-m{display:inline}
+
+  /* render views */
+  .view{overflow:visible;padding-bottom:40px;border-top:1px solid var(--line)}
+  .view .ph :is(img,canvas){transform:none}
+  .cap{padding:20px var(--gut) 0}
+  .cap .no{font-size:11px;letter-spacing:.18em;gap:10px;flex-wrap:wrap}
+  .cap .no i{width:28px}
+  .cap h4{font-size:clamp(30px,8vw,48px);margin:8px 0}
+  .cap p{font-size:15px}
+  .kp{max-width:640px;margin:18px var(--gut) 0}
+  .soon{top:12px;left:12px;font-size:10px;padding:6px 11px}
+
+  /* index */
+  .index{padding:calc(60px + 28px) var(--gut) 0;overflow:visible}
+  .index h2{margin:10px 0 18px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(min(230px,40vw),1fr));gap:12px}
+  .grid a div{font-size:12px}
+  footer{margin-top:32px;font-size:10px;letter-spacing:.12em}
+
+  #lb :is(img,canvas){max-width:100vw;max-height:88vh}
+}
+@media (max-width:600px){
+  #top{padding:0 16px}
+  #top nav .lg{display:none}
+  #top nav .sh{display:inline}
+}
+/* phones held sideways / short wide windows: image beside the text */
+@media (max-width:900px) and (orientation:landscape){
+  .hero .in{justify-content:center;padding-bottom:48px}
+  .hero::after{background:linear-gradient(90deg,rgba(12,11,10,.92) 0%,rgba(12,11,10,.7) 45%,rgba(12,11,10,.2) 85%)}
+  .scroll{display:none}
+  .floor{grid-template-columns:minmax(220px,.8fr) minmax(0,1.3fr);align-items:start}
+  .view{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:22px;
+        padding:calc(60px + 14px) var(--gut) 30px;align-content:center;min-height:100vh;min-height:100svh}
+  .view .ph{grid-row:1/3;border-radius:3px}
+  .cap{padding:0}
+  .cap h4{font-size:clamp(26px,4.4vw,40px)}
+  .cap p{font-size:14px}
+  .kp{margin:14px 0 0;max-width:none}
+  .soon{top:calc(60px + 24px);left:calc(var(--gut) + 10px)}
+}
+@media (max-width:900px) and (max-height:480px) and (orientation:landscape){
+  .hero h1{font-size:clamp(36px,7vw,60px);margin:10px 0 8px}
+  .hero .meta{margin-top:16px}
+  .hero .meta b{font-size:30px}
+}
+@media (prefers-reduced-motion:reduce){.pg.away .cap,.pg.away .kp,.pg.away .side,.pg.away .plan,.pg.away .in{transform:none}.rv{opacity:1;transform:none;transition:none}.scroll span{animation:none}}
+
+/* ---------- image protection: no drag, no long-press save, no selection ---------- */
+:is(img,canvas),svg,image{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<header id="top">
+  <a class="brand" href="#home">Proposed Restaurant · Narayanamangalam</a>
+  <div class="right">
+  <nav><a href="#GF" data-s="GF"><span class="lg">Ground Floor</span><span class="sh">Ground</span></a><a href="#FF" data-s="FF"><span class="lg">First Floor</span><span class="sh">First</span></a><a href="#index" data-s="index"><span class="lg">All Views</span><span class="sh">All</span></a></nav>
+  <div class="mode" role="group" aria-label="Render lighting">
+    <button type="button" id="modeDark" data-m="dark" aria-pressed="true" title="Dark renders"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5a6 6 0 1 0 7.7 7.7z" fill="currentColor"/></svg><span>Dark</span></button>
+    <button type="button" id="modeLight" data-m="light" aria-pressed="false" title="Light renders"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3 3l1.1 1.1M11.9 11.9 13 13M13 3l-1.1 1.1M4.1 11.9 3 13"/></g></svg><span>Light</span></button>
+  </div>
+  </div>
+</header>
+<main id="main"></main>
+<div id="lb"><span class="x">Close · Esc</span><canvas aria-hidden="true"></canvas></div>
+
+<script>
+// ---------- scrambled renders ----------
+// The render files are published as shuffled tiles (renders_s/, renders_light_s/). They are put back in
+// order here and drawn on <canvas>, so a copied file address or a download from the repo is a jumbled picture.
+const SCR = {C:11, R:9, K:0x2f6b1d37, LRU:4};
+function scrPerm(name){
+  let h=0x811c9dc5; for (let i=0;i<name.length;i++){ h^=name.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; }
+  let a=(h^SCR.K)>>>0; const n=SCR.C*SCR.R, p=[...Array(n).keys()];
+  const rnd=()=>{ a=(a+0x6D2B79F5)>>>0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+  for (let i=n-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [p[i],p[j]]=[p[j],p[i]]; }
+  return p;
+}
+const scrCache = new Map();   // url -> Promise<full-size unscrambled canvas> (small LRU)
+function scrFull(url){
+  if (scrCache.has(url)){ const pr=scrCache.get(url); scrCache.delete(url); scrCache.set(url,pr); return pr; }
+  const pr = new Promise((res,rej)=>{
+    const im = new Image(); im.decoding = "async";
+    im.onload = ()=>{
+      const W=im.naturalWidth, H=im.naturalHeight, tw=Math.floor(W/SCR.C/8)*8, th=Math.floor(H/SCR.R/8)*8, p=scrPerm(url);
+      const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+      x.drawImage(im,0,0);
+      for (let i=0;i<p.length;i++) x.drawImage(im,(i%SCR.C)*tw,Math.floor(i/SCR.C)*th,tw,th,(p[i]%SCR.C)*tw,Math.floor(p[i]/SCR.C)*th,tw,th);
+      im.removeAttribute("src"); res(c);
+    };
+    im.onerror = ()=>rej(new Error("missing " + url));
+    im.src = url;
+  });
+  scrCache.set(url,pr); pr.catch(()=>scrCache.delete(url));
+  while (scrCache.size > SCR.LRU) scrCache.delete(scrCache.keys().next().value);
+  return pr;
+}
+// draw url onto canvas cv, sized for where it is shown (opts.w forces a width)
+function scrPaint(cv, url, opts={}){
+  cv._want = url;
+  return scrFull(url).then(full=>{
+    if (cv._want !== url) return false;
+    const A=full.width/full.height, dpr=Math.min(window.devicePixelRatio||1, 2.5), bw=cv.clientWidth, bh=cv.clientHeight;
+    const need = opts.w || ((bw>8 && bh>8) ? Math.max(bw, bh*A)*dpr*1.2 : full.width);
+    const w=Math.min(full.width, Math.max(64, Math.round(need))), h=Math.round(w/A);
+    if (cv.width!==w || cv.height!==h){ cv.width=w; cv.height=h; }
+    const x=cv.getContext("2d"); x.imageSmoothingEnabled=true; x.imageSmoothingQuality="high"; x.drawImage(full,0,0,w,h);
+    cv._painted = url; return true;
+  }, err=>{ if (cv._want !== url) return false; cv._want = null; throw err; });
+}
+function scrRelease(cv){ cv._want = null; cv._painted = null; cv.width = 1; cv.height = 1; }
+
+const VIEWS = [{"n": 1, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_00", "cam": [432, 566], "ang": -1.5708, "cap": "Looking in from the front court, a dining bay set between planters, framed by the arched timber jaali."}, {"n": 2, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_01", "cam": [753, 563], "ang": 3.1416, "cap": "Along the front colonnade, the planter-lined dining bays to the right and the cobbled walk ahead."}, {"n": 3, "floor": "GF", "area": "Front Outdoor Dining", "file": "Outdoor_Dining_Area_Front_Ground_Floor_02", "cam": [497, 569], "ang": -0.5734, "cap": "Diagonal view across the bays, through the arches to the spiral stair beyond."}, {"n": 4, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent__View_00", "cam": [393, 347], "ang": 0.0, "cap": "From the kitchen end, down the length of the dining hall toward the banquette."}, {"n": 5, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent__View_01", "cam": [654, 308], "ang": 0.3903, "cap": "The banquette corner, with arched jaali openings to the outdoor bays."}, {"n": 6, "floor": "GF", "area": "Restaurant", "file": "Ground_Floor_Restaurent_Looking_At_Spiral_Staircase_View_07", "cam": [722, 372], "ang": -1.3353, "cap": "Looking up at the sculpted spiral stair to the first floor."}, {"n": 7, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_00", "cam": [445, 137], "ang": 1.9234, "cap": "From the rear verandah into a bench bay, the arch opening back into the hall."}, {"n": 8, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_01", "cam": [720, 131], "ang": -3.1023, "cap": "Rear verandah tables against the timber louvre screen."}, {"n": 9, "floor": "GF", "area": "Semi-Outdoor Dining", "file": "Ground_Floor_Semi_Outdoor_Restaurent_View_03", "cam": [523, 131], "ang": 0.0, "cap": "Down the louvred verandah toward the garden arch and the courtyard beyond."}, {"n": 10, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_04", "cam": [846, 569], "ang": -1.5708, "cap": "Entering the landscape court from the front, past the dining benches."}, {"n": 11, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_00", "cam": [882, 209], "ang": 1.7819, "cap": "Serpentine planter-benches running along the building's flank."}, {"n": 12, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_02", "cam": [1044, 335], "ang": -2.9617, "cap": "Looking back from the campfire court toward the restaurant."}, {"n": 13, "floor": "GF", "area": "Outdoor Seating & Campfire", "file": "Ground_Floor_Outdoor_Sittng_Area_Campfire_Area_View_03", "cam": [965, 335], "ang": -0.0348, "cap": "Into the campfire court, a curved bench wrapping the gathering space."}, {"n": 14, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_05", "cam": [661, 281], "ang": 3.1416, "cap": "Upper dining room, looking west through the glazed partition to the party hall."}, {"n": 15, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_06", "cam": [419, 314], "ang": -0.1007, "cap": "Toward the east gable wall with its arched jaali windows."}, {"n": 16, "floor": "FF", "area": "Restaurant", "file": "First_Floor_Restaurent_View_04", "cam": [772, 510], "ang": 3.1416, "cap": "The south dining room under the timber-slat ceiling, with the open timber frame to the left."}, {"n": 17, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_00", "cam": [353, 216], "ang": 2.0803, "cap": "From the back of the hall over the seating toward the louvred front."}, {"n": 18, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_01", "cam": [327, 497], "ang": -2.125, "cap": "From the front, back over the seating to the arched jaali windows."}, {"n": 19, "floor": "FF", "area": "Party Hall", "file": "First_Floor_Party_Hall_02", "cam": [150, 419], "ang": -0.5796, "cap": "Across the seating toward the glazed partition into the restaurant."}];
+const VB = "48 52 1078 568";
+const FL = {GF:{name:"Ground Floor", base:"keyplan/Ground_Floor_Keyplan_Base.svg", inv:"keyplan/Ground_Floor_Keyplan_Base_Inv.svg"},
+            FF:{name:"First Floor",  base:"keyplan/First_Floor_Keyplan_Base.svg",  inv:"keyplan/First_Floor_Keyplan_Base_Inv.svg"}};
+const PROJECT = "Proposed Restaurant @ Narayanamangalam, Kerala";
+const [vx,vy,vw,vh] = VB.split(" ").map(Number);
+const pad = n => String(n).padStart(2,"0");
+const total = VIEWS.length;
+const SHARED = {};   // views rendered from the same camera as another view
+
+function marker(v, o={}){
+  const r=o.r||13, L=o.L||85, fs=o.fs||13, sw=o.sw||1.8, h=0.56, [cx,cy]=v.cam, a=v.ang;
+  const p=(ang,len)=>[(cx+len*Math.cos(ang)).toFixed(1),(cy+len*Math.sin(ang)).toFixed(1)];
+  const [x1,y1]=p(a-h,L), [x2,y2]=p(a+h,L), [ax,ay]=p(a,r+L*0.32);
+  return `<g class="vm" data-v="${v.n}"><title>View ${pad(v.n)} · ${v.area}</title>
+    <path d="M${cx} ${cy}L${x1} ${y1}A${L} ${L} 0 0 1 ${x2} ${y2}Z" fill="#c8321f" fill-opacity=".26" stroke="#c8321f" stroke-width="${sw}"/>
+    <line x1="${cx}" y1="${cy}" x2="${ax}" y2="${ay}" stroke="#c8321f" stroke-width="${sw*1.6}" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#c8321f" stroke="#fff" stroke-width="${sw*1.3}"/>
+    <text x="${cx}" y="${cy+fs*0.36}" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="${fs}" font-weight="700" fill="#fff">${pad(v.n)}</text></g>`;
+}
+const ghost = v => `<circle cx="${v.cam[0]}" cy="${v.cam[1]}" r="10" fill="#ffffff" fill-opacity=".38"/>`;
+function north(x,y,s=1,inv=false){
+  const fg = inv ? "#ffffff" : "#1d1b18", bg = inv ? "none" : "#ffffff";
+  return `<g transform="translate(${x} ${y}) scale(${s})"><circle r="20" fill="${bg}" stroke="${fg}" stroke-width="2"/>
+  <path d="M0 -12 L0 12 M-7 4 L0 14 L7 4" fill="none" stroke="${fg}" stroke-width="2.4" stroke-linejoin="round"/>
+  <text y="-26" text-anchor="middle" font-family="Arial" font-size="15" font-weight="700" fill="${fg}">N</text></g>`;
+}
+const planSVG = (fl, inner, inv=false) => `<svg viewBox="${VB}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${FL[fl].name} key plan">
+  <image href="${inv ? FL[fl].inv : FL[fl].base}" x="${vx}" y="${vy}" width="${vw}" height="${vh}"/>${inner}${north(vx+vw-46, vy+vh-60, 1.25, inv)}</svg>`;
+const fileNo = v => (v.file.match(/(\d+)$/)||[,""])[1];
+
+let h = `<section class="hero pg" id="home">
+  <canvas class="d" data-scr="renders_s/Ground_Floor_Restaurent__View_00.jpg" role="img" aria-label="Ground floor restaurant"></canvas>
+  <canvas class="l" data-light="renders_light_s/Ground_Floor_Restaurent__View_00.jpg" aria-hidden="true"></canvas>
+  <div class="in">
+    <div class="kick"><i></i>Render Views · Batch 00</div>
+    <h1>Proposed Restaurant</h1>
+    <div class="sub">Narayanamangalam, Kerala</div>
+    <div class="meta">
+      <div><b>${total}</b>Rendered views</div>
+      <div><b>${VIEWS.filter(v=>v.floor=="GF").length}</b>Ground floor</div>
+      <div><b>${VIEWS.filter(v=>v.floor=="FF").length}</b>First floor</div>
+    </div>
+  </div>
+  <a class="scroll" href="#GF">Scroll<span></span></a>
+</section>`;
+
+for (const fl of ["GF","FF"]){
+  const vs = VIEWS.filter(v=>v.floor==fl);
+  const areas = [...new Set(vs.map(v=>v.area))];
+  h += `<section class="floor pg" id="${fl}" data-s="${fl}">
+    <div class="side">
+      <div class="kick"><i></i>Key plan · view positions</div>
+      <h2>${FL[fl].name}</h2>
+      <div class="d">${areas.join(" · ")}</div>
+      <ol>${vs.map(v=>`<li><a href="#v${pad(v.n)}"><em>${pad(v.n)}</em>${v.area}<small>View ${fileNo(v)}</small></a></li>`).join("")}</ol>
+    </div>
+    <div class="plan rv">${planSVG(fl, `<g class="mk-d">${vs.filter(v=>!SHARED[v.n]).map(v=>marker(v)).join("")}</g><g class="mk-m">${vs.filter(v=>!SHARED[v.n]).map(v=>marker(v,{r:28,L:120,fs:26,sw:3})).join("")}</g>`, true)}
+      <div class="note"><span>Red dot = camera position · wedge = view direction &amp; field of view</span><span>Click a marker to jump to its view</span></div>
+    </div>
+  </section>`;
+  for (const area of areas){
+    const av = vs.filter(v=>v.area==area);
+    for (const v of av){
+      const others = vs.filter(o=>o.n!==v.n && o.n!==SHARED[v.n] && SHARED[o.n]!==v.n).map(ghost).join("");
+      const cap = SHARED[v.n] ? `${v.cap} (Same position as view ${pad(SHARED[v.n])}.)` : v.cap;
+      h += `<article class="view pg" id="v${pad(v.n)}" data-s="${fl}">
+        <div class="ph"><canvas class="d" data-scr="renders_s/${v.file}.jpg" role="img" aria-label="${v.area}, view ${v.n}"></canvas><canvas class="l" data-light="renders_light_s/${v.file}.jpg" aria-hidden="true"></canvas></div>
+        <div class="soon">Light render coming soon</div>
+        <div class="cap rv">
+          <div class="no"><i></i>${FL[fl].name} · View ${pad(v.n)} / ${pad(total)} · ${av.indexOf(v)+1} of ${av.length} in this area</div>
+          <h4>${v.area}</h4>
+          <p>${cap}</p>
+        </div>
+        <div class="kp rv">
+          <div class="t"><span>Key plan</span><span>${FL[fl].name}</span></div>
+          ${planSVG(fl, others + marker(v,{r:24,L:175,fs:22,sw:3.4}), true)}
+          <div class="f"><span class="lg"><svg viewBox="0 0 22 16"><path d="M2 8 L20 1 A18 18 0 0 1 20 15 Z" fill="#c8321f" fill-opacity=".3" stroke="#c8321f"/><circle cx="3" cy="8" r="3" fill="#c8321f"/></svg>Camera &amp; view direction</span><span class="fn" title="${v.file}">${v.file.replace(/_/g," ")}</span></div>
+        </div>
+      </article>`;
+    }
+  }
+}
+
+h += `<section class="index pg" id="index" data-s="index">
+  <div class="kick"><i></i>Index</div><h2>All views</h2>
+  ${["GF","FF"].map(fl=>`<h5>${FL[fl].name}</h5><div class="grid">${VIEWS.filter(v=>v.floor==fl).map(v=>
+    `<a href="#v${pad(v.n)}"><canvas data-file="${v.file}" aria-hidden="true"></canvas><div><b>${pad(v.n)}</b>${v.area}</div></a>`).join("")}</div>`).join("")}
+<footer><span>${PROJECT}</span><span>Render Views · Batch 00</span></footer>
+</section>`;
+
+document.getElementById("main").innerHTML = h;
+
+// image fade-in
+// paint renders when they come near the screen, free them when far away (keeps phones light on memory)
+function scrUrl(cv){
+  if (cv.dataset.file){ const lt = root.classList.contains("lightmode") && !cv._lf;
+    return lt ? `renders_light_s/${cv.dataset.file}.jpg` : `renders_s/${cv.dataset.file}.jpg`; }
+  if (cv.classList.contains("l")) return lightRequested ? cv.dataset.light : null;
+  return cv.dataset.scr;
+}
+function scrWake(cv){
+  cv._near = true; const u = scrUrl(cv);
+  if (!u || cv._painted===u || cv._want===u) return;
+  scrPaint(cv, u).then(ok=>{ if (!ok) return;
+    if (cv.dataset.file) return;
+    cv.classList.add("ld");
+    if (cv.classList.contains("l")){ const host = cv.closest(".view, .hero"); host && host.classList.add("has-l"); }
+  }).catch(()=>{ if (cv.dataset.file && !cv._lf){ cv._lf = true; scrWake(cv); } });
+}
+function scrSleep(cv){ cv._near = false; if (cv._painted || cv._want) scrRelease(cv); }
+const scrCanvases = [...document.querySelectorAll("canvas[data-scr], canvas[data-light], canvas[data-file]")];
+const nearIO = new IntersectionObserver(es=>es.forEach(e=>{ if (e.isIntersecting) scrWake(e.target); }), {rootMargin:"150% 0px"});
+const farIO  = new IntersectionObserver(es=>es.forEach(e=>{ if (!e.isIntersecting) scrSleep(e.target); }), {rootMargin:"300% 0px"});
+scrCanvases.forEach(cv=>{ nearIO.observe(cv); farIO.observe(cv); });
+
+// reveal on scroll
+const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }), {rootMargin:"0px 0px -8% 0px"});
+document.querySelectorAll(".rv").forEach(el=>io.observe(el));
+
+// markers on the floor plans jump to their view
+document.querySelectorAll(".floor .vm").forEach(m=>m.addEventListener("click",()=>{
+  glideTo(document.getElementById("v"+pad(+m.dataset.v)));
+}));
+
+// top bar state, progress, active section
+const topBar = document.getElementById("top"), prog = document.getElementById("prog");
+const navLinks = [...document.querySelectorAll("#top nav a")];
+const secs = [...document.querySelectorAll("[data-s]")].filter(e=>e.tagName!=="A");
+function onScroll(){
+  const y = scrollY, H = document.documentElement.scrollHeight - innerHeight;
+  topBar.classList.toggle("solid", y > innerHeight*0.6);
+  prog.style.width = (H>0 ? 100*y/H : 0) + "%";
+  let cur = null;
+  for (const s of secs){ if (s.getBoundingClientRect().top < innerHeight*0.4) cur = s.dataset.s; }
+  navLinks.forEach(a=>a.classList.toggle("on", a.dataset.s===cur));
+}
+addEventListener("scroll", onScroll, {passive:true}); onScroll();
+
+const lb = document.getElementById("lb"), lbi = lb.querySelector("canvas");
+// eased glide between pages
+const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SMALL = matchMedia("(max-width: 900px)");   // phone / tablet layout: natural scrolling, no paging or parallax
+const root = document.documentElement;
+let glideRAF = 0, glideEnd = null, wheelLock = 0;
+const ease = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;   // easeInOutCubic
+function glideTo(el){
+  if (!el) return;
+  const from = scrollY, to = Math.round(el.getBoundingClientRect().top + scrollY);
+  const dist = to - from; if (Math.abs(dist) < 2) return;
+  cancelAnimationFrame(glideRAF); clearTimeout(glideEnd);
+  if (REDUCE){ scrollTo(0,to); return; }
+  const dur = Math.min(1500, 850 + Math.abs(dist)/innerHeight*140);
+  root.classList.add("gliding");
+  const t0 = performance.now();
+  const step = now=>{
+    const p = Math.min(1,(now-t0)/dur);
+    scrollTo(0, from + dist*ease(p));
+    if (p<1) glideRAF = requestAnimationFrame(step);
+    else glideEnd = setTimeout(()=>root.classList.remove("gliding"), 60);
+  };
+  glideRAF = requestAnimationFrame(step);
+  wheelLock = performance.now() + dur + 120;
+}
+// one page per wheel / trackpad gesture
+const pages = [...document.querySelectorAll(".pg")];
+function pageIndex(){ let best=0, d=1e9; pages.forEach((p,i)=>{ const x=Math.abs(p.getBoundingClientRect().top); if(x<d){d=x;best=i;} }); return best; }
+function canScroll(el, dy){
+  for (; el && el!==document.body && el!==document.documentElement; el=el.parentElement){
+    const s=getComputedStyle(el).overflowY;
+    if ((s==="auto"||s==="scroll") && el.scrollHeight>el.clientHeight+2){
+      if (dy>0 && el.scrollTop+el.clientHeight < el.scrollHeight-2) return true;
+      if (dy<0 && el.scrollTop>2) return true;
+    }
+  }
+  return false;
+}
+let wheelAcc=0, wheelT=null;
+addEventListener("wheel", e=>{
+  if (lb.classList.contains("on") || e.ctrlKey || SMALL.matches) return;
+  if (canScroll(e.target, e.deltaY)) return;
+  e.preventDefault();
+  const now=performance.now();
+  wheelAcc += e.deltaY; clearTimeout(wheelT); wheelT=setTimeout(()=>wheelAcc=0,180);
+  if (now < wheelLock || Math.abs(wheelAcc) < 30) return;
+  const i = Math.max(0, Math.min(pages.length-1, pageIndex() + (wheelAcc>0?1:-1)));
+  wheelAcc=0;
+  glideTo(pages[i]);
+}, {passive:false});
+
+// keyboard paging with the same glide
+addEventListener("keydown", e=>{
+  if (lb.classList.contains("on") || e.altKey || e.ctrlKey || e.metaKey || SMALL.matches) return;
+  const dir = {ArrowDown:1,PageDown:1," ":1,ArrowUp:-1,PageUp:-1}[e.key];
+  if (e.key==="Home"){ e.preventDefault(); glideTo(pages[0]); return; }
+  if (e.key==="End"){ e.preventDefault(); glideTo(pages[pages.length-1]); return; }
+  if (!dir || canScroll(pages[pageIndex()], dir)) return;
+  e.preventDefault();
+  if (performance.now() < wheelLock) return;
+  wheelLock = performance.now() + 700;
+  glideTo(pages[Math.max(0, Math.min(pages.length-1, pageIndex()+dir))]);
+});
+
+// in-page links glide too
+document.addEventListener("click", e=>{
+  const a = e.target.closest('a[href^="#"]'); if (!a) return;
+  const el = document.getElementById(a.getAttribute("href").slice(1)); if (!el) return;
+  e.preventDefault(); glideTo(el);
+});
+
+// parallax on the renders + settle captions on the active page
+function frame(){
+  const H = innerHeight;
+  if (SMALL.matches){ pages.forEach(p=>p.classList.remove("away")); return; }
+  pages.forEach(p=>{
+    const r = p.getBoundingClientRect();
+    const near = r.bottom > -H*0.2 && r.top < H*1.2;
+    if (!near) return;
+    if (!REDUCE){ const k = r.top / H, tf = `translate3d(0,${(k*14).toFixed(2)}%,0) scale(1.18)`;
+      p.querySelectorAll(".ph canvas, .hero > canvas").forEach(img=>img.style.transform = tf); }
+    p.classList.toggle("away", Math.abs(r.top) > H*0.45);
+  });
+}
+let ticking=false;
+addEventListener("scroll", ()=>{ if(!ticking){ ticking=true; requestAnimationFrame(()=>{ ticking=false; frame(); }); } }, {passive:true});
+addEventListener("resize", frame); frame();
+// switching between desktop and phone layouts (rotate / resize): drop parallax transforms so CSS takes over
+const onLayout = ()=>{ document.querySelectorAll(".ph canvas, .hero > canvas").forEach(img=>img.style.transform=""); frame(); onScroll(); };
+SMALL.addEventListener ? SMALL.addEventListener("change", onLayout) : SMALL.addListener(onLayout);
+
+// lightbox
+
+document.querySelectorAll(".view .ph").forEach(ph=>ph.addEventListener("click",()=>{ const art=ph.closest(".view"); const useL = root.classList.contains("lightmode") && art.classList.contains("has-l"); const c = ph.querySelector(useL?"canvas.l":"canvas.d"); lb.classList.add("on"); scrPaint(lbi, useL ? c.dataset.light : c.dataset.scr, {w:4000}).catch(()=>{}); }));
+const lbClose = ()=>{ if (!lb.classList.contains("on")) return; lb.classList.remove("on"); scrRelease(lbi); };
+lb.addEventListener("click", lbClose);
+addEventListener("keydown",e=>{ if(e.key==="Escape") lbClose(); });
+
+// dark / light render sets (scrambled light files live in renders_light_s/ under the same names)
+const modeBtns = [...document.querySelectorAll(".mode button")];
+let lightRequested = false;
+function loadLight(){
+  if (lightRequested) return; lightRequested = true;
+  document.querySelectorAll("canvas.l[data-light]").forEach(cv=>{ if (cv._near) scrWake(cv); });
+}
+function setThumbs(light){
+  document.querySelectorAll(".grid canvas[data-file]").forEach(cv=>{ if (cv._near) scrWake(cv); });   // scrUrl() picks dark / light
+}
+function setMode(m, save=true){
+  const light = m === "light";
+  root.classList.toggle("lightmode", light);
+  modeBtns.forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.m===m)));
+  if (light) loadLight();
+  setThumbs(light);
+  if (save) { try{ localStorage.setItem("renderMode", m); }catch(e){} }
+}
+modeBtns.forEach(b=>b.addEventListener("click", ()=>setMode(b.dataset.m)));
+try{ if (localStorage.getItem("renderMode")==="light") setMode("light", false); }catch(e){}
+</script>
+<script>
+// ---------- image protection (deterrent: right-click, drag, save / view-source shortcuts) ----------
+(function(){
+  const stop = e => { e.preventDefault(); e.stopPropagation(); return false; };
+  document.addEventListener("contextmenu", stop, true);                       // right-click / long-press menu
+  document.addEventListener("dragstart", e => { if (e.target.closest && e.target.closest("img,svg,a")) stop(e); }, true);
+  document.addEventListener("selectstart", stop, true);
+  document.addEventListener("keydown", e => {
+    const k = (e.key || "").toLowerCase(), mod = e.ctrlKey || e.metaKey;
+    if ((mod && ["s","u","p"].includes(k)) ||                                // save page, view source, print
+        (mod && e.shiftKey && ["i","j","c"].includes(k)) ||                  // dev tools
+        k === "f12") stop(e);
+  }, true);
+  const lockImgs = root => root.querySelectorAll("img").forEach(im => { im.draggable = false; im.setAttribute("oncontextmenu","return false"); });
+  lockImgs(document);
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.querySelectorAll && lockImgs(n.parentNode || n)))).observe(document.body, {childList:true, subtree:true});
+})();
+</script>
+</body>
+</html>
